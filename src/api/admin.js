@@ -59,3 +59,7 @@ export async function inventoryReport(params) {
   const { data } = await api.get("/reports/inventory", { params });
   return data.data;
 }
+export async function listCustomers() {
+  const { data } = await api.get("/admin/customers");
+  return data.data;
+}

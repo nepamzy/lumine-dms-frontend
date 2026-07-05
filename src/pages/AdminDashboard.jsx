@@ -3,6 +3,7 @@ import Overview from "./admin/Overview";
 import Products from "./admin/Products";
 import Orders from "./admin/Orders";
 import Distributors from "./admin/Distributors";
+import Customers from "./admin/Customers";
 
 const TABS = [
   { key: "overview", label: "Overview", Component: Overview },
@@ -10,6 +11,7 @@ const TABS = [
   { key: "orders", label: "Orders", Component: Orders },
   { key: "distributors", label: "Distributors", Component: Distributors },
 ];
+  { key: "customers", label: "Customers", Component: Customers },
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
