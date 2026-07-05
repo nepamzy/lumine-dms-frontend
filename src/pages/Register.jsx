@@ -38,13 +38,27 @@ export default function Register() {
   const navigate = useNavigate();
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+const getLocation = () => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ latitude: null, longitude: null });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => resolve({ latitude: null, longitude: null }), // permission denied or failed — don't block signup
+        { timeout: 8000 }
+      );
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const result = await register({ ...form, role });
+      const { latitude, longitude } = await getLocation();
+      const result = await register({ ...form, role, latitude, longitude });
       setSuccess(result.message || "Account created. You can now sign in.");
       setTimeout(() => navigate("/login"), 1800);
     } catch (err) {
