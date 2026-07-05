@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
+  import { Link, useNavigate } from "react-router-dom";
+import { useCart, resolveTierPrice } from "../context/CartContext";
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total } = useCart();
@@ -20,40 +20,52 @@ export default function Cart() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-6">Your Order</h1>
-
       <div className="flex flex-col gap-3 mb-6">
-        {items.map((item) => (
-          <div key={item.productId} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-navy-900">{item.name}</p>
-              <p className="text-sm text-navy-900/60">₦{item.unitPrice.toLocaleString()} each</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={1}
-                value={item.quantity}
-                onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value, 10) || 0)}
-                className="w-16 border border-navy-900/15 rounded-md px-2 py-1.5 text-sm text-center"
-              />
-              <button
-                onClick={() => removeItem(item.productId)}
-                className="text-status-danger text-xs font-semibold"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+        {items.map((item) => {
+          const unitPrice = resolveTierPrice(item.priceTiers, item.quantity);
+          const basePrice = Number(item.priceTiers[0]?.price || 0);
+          const isDiscounted = unitPrice < basePrice;
 
+          return (
+            <div key={item.variantId} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-navy-900">
+                  {item.productName} — {item.size}
+                </p>
+                <div className="flex items-center gap-2 text-sm text-navy-900/60">
+                  {isDiscounted && (
+                    <span className="line-through text-status-danger">
+                      ₦{basePrice.toLocaleString()}
+                    </span>
+                  )}
+                  <span>₦{unitPrice.toLocaleString()} each</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  onChange={(e) => updateQuantity(item.variantId, parseInt(e.target.value, 10) || 0)}
+                  className="w-16 border border-navy-900/15 rounded-md px-2 py-1.5 text-sm text-center"
+                />
+                <button
+                  onClick={() => removeItem(item.variantId)}
+                  className="text-status-danger text-xs font-semibold"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <div className="bg-navy-800 text-cream-50 rounded-card p-5 flex items-center justify-between mb-6">
         <span className="font-semibold">Total</span>
         <span className="font-display font-bold text-xl text-gold-500">
           ₦{total.toLocaleString()}
         </span>
       </div>
-
       <button
         onClick={() => navigate("/checkout")}
         className="w-full bg-gold-500 text-navy-900 font-bold py-3.5 rounded-md hover:bg-gold-700 transition-colors"

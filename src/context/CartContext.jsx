@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 
 const CartContext = createContext(null);
+const STORAGE_KEY = "lumine_cart";
 
-// Finds the correct price for a given quantity from a variant's tier list
 export function resolveTierPrice(priceTiers, quantity) {
   if (!priceTiers || priceTiers.length === 0) return 0;
   const tier = priceTiers.find(
@@ -11,9 +11,21 @@ export function resolveTierPrice(priceTiers, quantity) {
   return tier ? Number(tier.price) : Number(priceTiers[0].price);
 }
 
+function loadCart() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
-  // item shape: { variantId, productName, size, priceTiers, quantity }
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(loadCart);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
   const addItem = useCallback((variant, productName, quantity = 1) => {
     setItems((prev) => {
