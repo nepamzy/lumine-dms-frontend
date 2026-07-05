@@ -10,8 +10,8 @@ const TABS = [
   { key: "products", label: "Products", Component: Products },
   { key: "orders", label: "Orders", Component: Orders },
   { key: "distributors", label: "Distributors", Component: Distributors },
-];
   { key: "customers", label: "Customers", Component: Customers },
+];
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
