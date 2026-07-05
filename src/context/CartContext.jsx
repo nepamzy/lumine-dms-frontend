@@ -2,45 +2,60 @@ import { createContext, useContext, useState, useCallback, useMemo } from "react
 
 const CartContext = createContext(null);
 
-export function CartProvider({ children }) {
-  const [items, setItems] = useState([]); // { productId, name, unitPrice, quantity }
+// Finds the correct price for a given quantity from a variant's tier list
+export function resolveTierPrice(priceTiers, quantity) {
+  if (!priceTiers || priceTiers.length === 0) return 0;
+  const tier = priceTiers.find(
+    (t) => quantity >= t.min_qty && (t.max_qty === null || quantity <= t.max_qty)
+  );
+  return tier ? Number(tier.price) : Number(priceTiers[0].price);
+}
 
-  const addItem = useCallback((product, quantity = 1) => {
+export function CartProvider({ children }) {
+  // item shape: { variantId, productName, size, priceTiers, quantity }
+  const [items, setItems] = useState([]);
+
+  const addItem = useCallback((variant, productName, quantity = 1) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === product.id);
+      const existing = prev.find((i) => i.variantId === variant.id);
       if (existing) {
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i
+          i.variantId === variant.id ? { ...i, quantity: i.quantity + quantity } : i
         );
       }
       return [
         ...prev,
         {
-          productId: product.id,
-          name: product.name,
-          unitPrice: Number(product.unit_price),
+          variantId: variant.id,
+          productName,
+          size: variant.size,
+          priceTiers: variant.priceTiers,
           quantity,
         },
       ];
     });
   }, []);
 
-  const removeItem = useCallback((productId) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((variantId) => {
+    setItems((prev) => prev.filter((i) => i.variantId !== variantId));
   }, []);
 
-  const updateQuantity = useCallback((productId, quantity) => {
+  const updateQuantity = useCallback((variantId, quantity) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.productId !== productId));
+      setItems((prev) => prev.filter((i) => i.variantId !== variantId));
       return;
     }
-    setItems((prev) => prev.map((i) => (i.productId === productId ? { ...i, quantity } : i)));
+    setItems((prev) => prev.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)));
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
 
   const total = useMemo(
-    () => items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
+    () =>
+      items.reduce(
+        (sum, i) => sum + resolveTierPrice(i.priceTiers, i.quantity) * i.quantity,
+        0
+      ),
     [items]
   );
 

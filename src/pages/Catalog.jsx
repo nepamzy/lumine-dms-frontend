@@ -20,12 +20,12 @@ export default function Catalog() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleAdd = (product) => {
+  const handleAdd = (variant, productName, quantity) => {
     if (!user) {
       navigate("/login");
       return;
     }
-    addItem(product, 1);
+    addItem(variant, productName, quantity);
   };
 
   return (

@@ -1,7 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { getProductVariants } from "../api/products";
+import { resolveTierPrice } from "../context/CartContext";
 
 const FLAVOR_COLORS = {
   fullcream: "#1E3A8A",
+  lite: "#2F6B2F",
   "sugar free": "#2F6B2F",
   strawberry: "#D6336C",
   banana: "#E0A800",
@@ -16,33 +19,32 @@ function flavorColor(name = "") {
 }
 
 export default function ProductCard({ product, onAdd }) {
-  const cardRef = useRef(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [variants, setVariants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
-  const handleMouseMove = (e) => {
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width - 0.5;
-    const py = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: py * -6, y: px * 6 }); // max 6deg, per design system
+  useEffect(() => {
+    getProductVariants(product.id)
+      .then((data) => {
+        setVariants(data);
+        if (data.length > 0) setSelectedSize(data[0].size);
+      })
+      .finally(() => setLoading(false));
+  }, [product.id]);
+
+  const activeVariant = variants.find((v) => v.size === selectedSize);
+  const basePrice = activeVariant ? Number(activeVariant.priceTiers[0]?.price) : 0;
+  const currentPrice = activeVariant ? resolveTierPrice(activeVariant.priceTiers, quantity) : 0;
+  const isDiscounted = currentPrice < basePrice;
+
+  const handleAdd = () => {
+    if (!activeVariant) return;
+    onAdd(activeVariant, product.name, quantity);
   };
 
-  const resetTilt = () => setTilt({ x: 0, y: 0 });
-
-  const outOfStock = Number(product.total_stock) <= 0;
-
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={resetTilt}
-      style={{
-        transform: `perspective(600px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-        transition: "transform 0.15s ease-out",
-      }}
-      className="bg-white rounded-card shadow-card p-5 flex flex-col"
-    >
+    <div className="bg-white rounded-card shadow-card p-5 flex flex-col">
       <div
         className="h-32 rounded-lg mb-4 flex items-center justify-center"
         style={{
@@ -70,28 +72,66 @@ export default function ProductCard({ product, onAdd }) {
         {product.category || "Yoghurt"}
       </span>
 
-      {!outOfStock && product.nearest_expiry && (
-        <span className="text-[10px] font-bold uppercase tracking-wide text-green-500 mb-2 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-          Freshly Batched
-        </span>
+      <h3 className="font-display font-bold text-navy-900 mb-1">{product.name}</h3>
+
+      {loading && <p className="text-xs text-navy-900/50 mb-3">Loading sizes…</p>}
+
+      {!loading && variants.length === 0 && (
+        <p className="text-xs text-status-danger mb-3">No sizes available yet.</p>
       )}
 
-      <h3 className="font-display font-bold text-navy-900 mb-1">{product.name}</h3>
-      <p className="text-sm text-navy-900/60 mb-3">SKU: {product.sku}</p>
+      {!loading && variants.length > 0 && (
+        <>
+          {/* Size selector */}
+          <div className="flex gap-1 mb-3">
+            {variants.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setSelectedSize(v.size)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition-colors ${
+                  selectedSize === v.size
+                    ? "bg-navy-800 text-cream-50 border-navy-800"
+                    : "bg-white text-navy-900/70 border-navy-900/15 hover:border-navy-800"
+                }`}
+              >
+                {v.size}
+              </button>
+            ))}
+          </div>
 
-      <div className="mt-auto flex items-center justify-between">
-        <span className="font-display font-bold text-navy-800">
-          ₦{Number(product.unit_price).toLocaleString()}
-        </span>
-        <button
-          onClick={() => onAdd(product)}
-          disabled={outOfStock}
-          className="bg-navy-800 text-cream-50 text-xs font-bold px-4 py-2 rounded-md hover:bg-gold-500 hover:text-navy-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {outOfStock ? "Out of stock" : "Add to order"}
-        </button>
-      </div>
+          {/* Quantity input */}
+          <div className="flex items-center gap-2 mb-3">
+            <label className="text-xs text-navy-900/60">Qty (packs):</label>
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              className="w-16 border border-navy-900/15 rounded-md px-2 py-1 text-sm"
+            />
+          </div>
+
+          {/* Price display */}
+          <div className="mt-auto flex items-center justify-between">
+            <div className="flex flex-col">
+              {isDiscounted && (
+                <span className="text-xs text-status-danger line-through">
+                  ₦{basePrice.toLocaleString()}
+                </span>
+              )}
+              <span className="font-display font-bold text-navy-800">
+                ₦{currentPrice.toLocaleString()}
+              </span>
+            </div>
+            <button
+              onClick={handleAdd}
+              className="bg-navy-800 text-cream-50 text-xs font-bold px-4 py-2 rounded-md hover:bg-gold-500 hover:text-navy-900 transition-colors"
+            >
+              Add to order
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
