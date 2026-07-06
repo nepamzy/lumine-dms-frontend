@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
-const STORAGE_KEY = "lumine_cart";
 
 export function resolveTierPrice(priceTiers, quantity) {
   if (!priceTiers || priceTiers.length === 0) return 0;
@@ -11,9 +11,13 @@ export function resolveTierPrice(priceTiers, quantity) {
   return tier ? Number(tier.price) : Number(priceTiers[0].price);
 }
 
-function loadCart() {
+function storageKey(userId) {
+  return userId ? `lumine_cart_${userId}` : "lumine_cart_guest";
+}
+
+function loadCart(userId) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(userId));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -21,11 +25,18 @@ function loadCart() {
 }
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(loadCart);
+  const { user } = useAuth();
+  const [items, setItems] = useState([]);
+
+  // Whenever the logged-in user changes (login/logout/switch account),
+  // load that user's own cart instead of whatever was there before.
+  useEffect(() => {
+    setItems(loadCart(user?.id));
+  }, [user?.id]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    localStorage.setItem(storageKey(user?.id), JSON.stringify(items));
+  }, [items, user?.id]);
 
   const addItem = useCallback((variant, productName, quantity = 1) => {
     setItems((prev) => {
