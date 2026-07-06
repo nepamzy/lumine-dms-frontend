@@ -31,8 +31,8 @@ export default function Catalog() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Product Catalog</h1>
-      <p className="text-navy-900/60 text-sm mb-8">
-        7 flavours, all batch and expiry tracked for freshness.
+     <p className="text-navy-900/60 text-sm mb-8">
+        3 flavours, all batch and expiry tracked for freshness.
       </p>
 
       {loading && <p className="text-navy-900/60">Loading products…</p>}

@@ -1,16 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-
+import fullcreamWatermark from "../assets/fullcream-1L.png";
 const FLAVORS = [
   { name: "Fullcream", cap: "#1E3A8A", body: "#F4F1E8" },
-  { name: "Sugar Free", cap: "#2F6B2F", body: "#F1F0DE" },
-  { name: "Strawberry", cap: "#D6336C", body: "#F8C9D4" },
-  { name: "Banana", cap: "#E0A800", body: "#F5D87A" },
-  { name: "Fura", cap: "#3D2B1F", body: "#C9A36A" },
-  { name: "Plain", cap: "#E8E8E8", body: "#FBFBF6" },
-  { name: "Chocolate", cap: "#3D2410", body: "#D9B88A" },
+  { name: "Lite", cap: "#2F6B2F", body: "#F1F0DE" },
+  { name: "Sugar Free", cap: "#3D2B1F", body: "#C9A36A" },
 ];
-
 function Bottle({ flavor, style }) {
   return (
     <div
@@ -146,11 +141,17 @@ function ProductRing() {
 export default function Home() {
   return (
     <div
-      className="text-cream-50"
+      className="text-cream-50 relative overflow-hidden"
       style={{ background: "radial-gradient(ellipse at 50% 0%, #0F4DB8 0%, #0A2D6F 65%, #061C47 100%)" }}
     >
-      <section className="max-w-3xl mx-auto text-center px-6 pt-16 pb-4">
-        <p className="text-gold-500 text-xs font-bold tracking-[3px] mb-3">
+      <img
+        src={fullcreamWatermark}
+        alt=""
+        aria-hidden="true"
+        className="absolute top-0 right-0 pointer-events-none select-none"
+        style={{ width: 420, opacity: 0.08, filter: "grayscale(20%)" }}
+      />
+      <section className="max-w-3xl mx-auto text-center px-6 pt-16 pb-4 relative z-10">        <p className="text-gold-500 text-xs font-bold tracking-[3px] mb-3">
           ONE BRAND. MANY FLAVOURS.
         </p>
         <h1 className="font-display font-extrabold text-4xl md:text-5xl leading-tight mb-4">
@@ -167,13 +168,13 @@ export default function Home() {
           >
             Browse Catalog
           </Link>
-          <Link
-            to="/become-a-distributor"
+      <Link
+            to="/register"
             className="border border-gold-500/50 text-cream-50 font-semibold text-sm px-6 py-3 rounded-md hover:bg-white/5 transition-colors"
           >
-            Become a Distributor
-          </Link>
-        </div>
+            Become a Distributor/Customer
+          </Link>      
+  </div>
       </section>
 
       <ProductRing />
