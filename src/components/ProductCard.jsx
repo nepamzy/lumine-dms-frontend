@@ -1,6 +1,26 @@
 import { useEffect, useState } from "react";
 import { getProductVariants } from "../api/products";
 import { resolveTierPrice } from "../context/CartContext";
+import fullcream35cl from "../assets/fullcream-35cl.png";
+import fullcream50cl from "../assets/fullcream-50cl.png";
+import fullcream1L from "../assets/fullcream-1L.png";
+import sugarfree35cl from "../assets/sugarfree-35cl.png";
+import sugarfree50cl from "../assets/sugarfree-50cl.png";
+import sugarfree1L from "../assets/sugarfree-1L.png";
+import lite35cl from "../assets/lite-35cl.png";
+import lite50cl from "../assets/lite-50cl.png";
+import lite1L from "../assets/lite-1L.png";
+
+const PRODUCT_IMAGES = {
+  fullcream: { "35cl": fullcream35cl, "50cl": fullcream50cl, "1L": fullcream1L },
+  lite: { "35cl": lite35cl, "50cl": lite50cl, "1L": lite1L },
+  "sugar free": { "35cl": sugarfree35cl, "50cl": sugarfree50cl, "1L": sugarfree1L },
+};
+
+function getProductImage(name = "", size) {
+  const key = Object.keys(PRODUCT_IMAGES).find((k) => name.toLowerCase().includes(k));
+  return key ? PRODUCT_IMAGES[key][size] : null;
+}
 
 const FLAVOR_COLORS = {
   fullcream: "#1E3A8A",
@@ -46,22 +66,29 @@ export default function ProductCard({ product, onAdd }) {
   return (
     <div className="bg-white rounded-card shadow-card p-5 flex flex-col">
       <div
-        className="h-32 rounded-lg mb-4 flex items-center justify-center"
+        className="h-40 rounded-lg mb-4 flex items-center justify-center overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${flavorColor(product.name)}22, ${flavorColor(
             product.name
           )}11)`,
         }}
       >
-        <div
-          className="w-10 h-20 rounded-t-md rounded-b-lg"
-          style={{
-            background: `linear-gradient(135deg, #fff 0%, ${flavorColor(product.name)}33 100%)`,
-            border: `2px solid ${flavorColor(product.name)}`,
-          }}
-        />
+        {selectedSize && getProductImage(product.name, selectedSize) ? (
+          <img
+            src={getProductImage(product.name, selectedSize)}
+            alt={`${product.name} ${selectedSize}`}
+            className="h-full object-contain"
+          />
+        ) : (
+          <div
+            className="w-10 h-20 rounded-t-md rounded-b-lg"
+            style={{
+              background: `linear-gradient(135deg, #fff 0%, ${flavorColor(product.name)}33 100%)`,
+              border: `2px solid ${flavorColor(product.name)}`,
+            }}
+          />
+        )}
       </div>
-
       <span
         className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full w-fit mb-2"
         style={{
