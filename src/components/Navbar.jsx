@@ -29,9 +29,19 @@ export default function Navbar() {
           <Link to="/catalog" className="hover:text-gold-500 transition-colors">
             Catalog
           </Link>
-          {user && (
+         {user && (
             <Link to={dashboardPath} className="hover:text-gold-500 transition-colors">
               {user.role === "customer" ? "My Orders" : "Dashboard"}
+            </Link>
+          )}
+          {user && (user.role === "customer" || user.role === "distributor") && (
+            <Link to="/profile" className="hover:text-gold-500 transition-colors">
+              Profile
+            </Link>
+          )}
+          {!user && (
+            <Link to="/register" className="hover:text-gold-500 transition-colors">
+              Become a Distributor/Customer
             </Link>
           )}
           {!user && (

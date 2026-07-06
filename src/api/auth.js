@@ -21,3 +21,12 @@ export async function logout() {
   await api.post("/auth/logout");
   setAccessToken(null);
 }
+export async function updateProfile(updates) {
+  const { data } = await api.patch("/auth/me", updates);
+  return data.data;
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const { data } = await api.post("/auth/change-password", { currentPassword, newPassword });
+  return data.data;
+}

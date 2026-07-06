@@ -11,6 +11,7 @@ import Checkout from "./pages/Checkout";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import DistributorDashboard from "./pages/DistributorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -45,6 +46,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["customer"]}>
                 <CustomerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={["customer", "distributor"]}>
+                <Profile />
               </ProtectedRoute>
             }
           />
