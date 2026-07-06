@@ -12,16 +12,18 @@ import lite50cl from "../assets/lite-50cl.png";
 import lite1L from "../assets/lite-1L.png";
 
 const PRODUCT_IMAGES = {
-  fullcream: { "35cl": fullcream35cl, "50cl": fullcream50cl, "1L": fullcream1L },
-  lite: { "35cl": lite35cl, "50cl": lite50cl, "1L": lite1L },
-  "sugar free": { "35cl": sugarfree35cl, "50cl": sugarfree50cl, "1L": sugarfree1L },
+  fullcream: { "35cl": lite35cl, "50cl": lite50cl, "1L": lite1L },
+  lite: { "35cl": fullcream35cl, "50cl": fullcream50cl, "1L": fullcream1L },
+  "sugar-free": { "35cl": sugarfree35cl, "50cl": sugarfree50cl, "1L": sugarfree1L },
 };
 
 function getProductImage(name = "", size) {
-  const key = Object.keys(PRODUCT_IMAGES).find((k) => name.toLowerCase().includes(k));
+  const normalized = name.toLowerCase().replace(/-/g, " ").trim();
+  const key = Object.keys(PRODUCT_IMAGES).find((k) =>
+    normalized.includes(k.replace(/-/g, " "))
+  );
   return key ? PRODUCT_IMAGES[key][size] : null;
 }
-
 const FLAVOR_COLORS = {
   fullcream: "#1E3A8A",
   lite: "#2F6B2F",
