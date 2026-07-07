@@ -1,106 +1,25 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import Bottle3D from "../components/Bottle3D";
+
 import fullcreamWatermark from "../assets/fullcream-1L.png";
-import fullcream1L from "../assets/fullcream-1L.png";
-import lite1L from "../assets/lite-1L.png";
-import sugarfree1L from "../assets/sugarfree-1L.png";
+import fullcreamFront from "../assets/fullcream-1L-front.png";
+import fullcreamBack from "../assets/fullcream-1L-back.png";
+import liteFront from "../assets/lite-1L-front.png";
+import liteBack from "../assets/lite-1L-back.png";
+import sugarfreeFront from "../assets/sugarfree-1L-front.png";
+import sugarfreeBack from "../assets/sugarfree-1L-back.png";
 
 const FLAVORS = [
-  { name: "Fullcream", image: fullcream1L },
-  { name: "Lite", image: lite1L },
-  { name: "Sugar Free", image: sugarfree1L },
+  { name: "Fullcream", front: fullcreamFront, back: fullcreamBack },
+  { name: "Lite", front: liteFront, back: liteBack },
+  { name: "Sugar Free", front: sugarfreeFront, back: sugarfreeBack },
 ];
 
-function Bottle({ flavor, style }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        width: 130,
-        height: 220,
-        left: "50%",
-        top: "50%",
-        marginLeft: -65,
-        marginTop: -110,
-        transformStyle: "preserve-3d",
-        ...style,
-      }}
-    >
-      <img
-        src={flavor.image}
-        alt={flavor.name}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          filter: "drop-shadow(0 18px 20px rgba(10,23,48,0.45))",
-        }}
-        draggable={false}
-      />
-    </div>
-  );
-}
-
-function ProductRing() {
-  const [rotation, setRotation] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const lastX = useRef(0);
-  const autoRotate = useRef(true);
-
-  useEffect(() => {
-    let raf;
-    const tick = () => {
-      if (autoRotate.current && !dragging) setRotation((r) => r + 0.15);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [dragging]);
-
-  const onPointerDown = (e) => {
-    setDragging(true);
-    autoRotate.current = false;
-    lastX.current = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-  };
-  const onPointerMove = (e) => {
-    if (!dragging) return;
-    const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-    setRotation((r) => r + (x - lastX.current) * 0.4);
-    lastX.current = x;
-  };
-  const onPointerUp = () => {
-    setDragging(false);
-    setTimeout(() => (autoRotate.current = true), 1500);
-  };
-
-  return (
-    <div
-      onMouseDown={onPointerDown}
-      onMouseMove={onPointerMove}
-      onMouseUp={onPointerUp}
-      onMouseLeave={onPointerUp}
-      onTouchStart={onPointerDown}
-      onTouchMove={onPointerMove}
-      onTouchEnd={onPointerUp}
-      className="relative h-80 mt-6"
-      style={{ perspective: 1000, cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
-    >
-      <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d" }}>
-        {FLAVORS.map((flavor, i) => {
-          const angle = (360 / FLAVORS.length) * i + rotation;
-          return (
-            <Bottle key={flavor.name} flavor={flavor} style={{ transform: `rotateY(${angle}deg) translateZ(110px)` }} />
-          );
-        })}
-      </div>
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] text-cream-50/45 tracking-wide">
-        drag to spin
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
+  const [activeFlavor, setActiveFlavor] = useState(0);
+  const flavor = FLAVORS[activeFlavor];
+
   return (
     <div
       className="text-cream-50 relative overflow-hidden"
@@ -140,16 +59,26 @@ export default function Home() {
         </div>
       </section>
 
-      <ProductRing />
+      <div className="relative z-10 h-96 max-w-md mx-auto">
+        <Bottle3D frontImage={flavor.front} backImage={flavor.back} />
+      </div>
+      <p className="text-center text-[11px] text-cream-50/45 tracking-wide -mt-2 mb-4">
+        drag to spin
+      </p>
 
-      <div className="flex flex-wrap justify-center gap-2.5 px-6 pb-16">
-        {FLAVORS.map((f) => (
-          <div
+      <div className="flex flex-wrap justify-center gap-2.5 px-6 pb-16 relative z-10">
+        {FLAVORS.map((f, i) => (
+          <button
             key={f.name}
-            className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-xs text-cream-50/85"
+            onClick={() => setActiveFlavor(i)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
+              activeFlavor === i
+                ? "bg-gold-500 text-navy-900 font-bold"
+                : "bg-white/5 border border-white/10 text-cream-50/85 hover:bg-white/10"
+            }`}
           >
             {f.name}
-          </div>
+          </button>
         ))}
       </div>
     </div>
