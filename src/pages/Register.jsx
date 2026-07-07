@@ -115,7 +115,7 @@ const getLocation = () => {
 
         {role === "customer" ? (
           <>
-            <Field label="Business name (optional)">
+           <Field label="Business name (optional)">
             <input value={form.businessName} onChange={update("businessName")} className="input" />
           </Field>
             <Field label="Customer type">
