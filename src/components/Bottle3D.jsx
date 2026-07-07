@@ -33,8 +33,14 @@ export default function Bottle3D({ frontImage, backImage, autoRotate = true }) {
     const group = new THREE.Group();
     scene.add(group);
 
-    let frontMesh, backMesh;
+    // Safety-net solid backing so any thin gaps in the label wrap show
+    // white/cream (like the yoghurt inside) instead of the page background.
+    const backingGeo = new THREE.CylinderGeometry(0.95, 0.95, 2.5, 32);
+    const backingMat = new THREE.MeshStandardMaterial({ color: 0xfdfaf3, roughness: 0.6 });
+    const backingMesh = new THREE.Mesh(backingGeo, backingMat);
+    group.add(backingMesh);
 
+    let frontMesh, backMesh;
     loader.load(frontImage, (frontTex) => {
       frontTex.colorSpace = THREE.SRGBColorSpace;
       const frontMat = new THREE.MeshStandardMaterial({

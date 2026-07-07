@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import Bottle3D from "../components/Bottle3D";
 
@@ -17,9 +16,6 @@ const FLAVORS = [
 ];
 
 export default function Home() {
-  const [activeFlavor, setActiveFlavor] = useState(0);
-  const flavor = FLAVORS[activeFlavor];
-
   return (
     <div
       className="text-cream-50 relative overflow-hidden"
@@ -59,26 +55,25 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="relative z-10 h-96 max-w-md mx-auto">
-        <Bottle3D frontImage={flavor.front} backImage={flavor.back} />
+      <div className="relative z-10 flex justify-center items-center gap-2 md:gap-6 h-72 max-w-3xl mx-auto px-4">
+        {FLAVORS.map((f) => (
+          <div key={f.name} className="w-1/3 h-full">
+            <Bottle3D frontImage={f.front} backImage={f.back} />
+          </div>
+        ))}
       </div>
-      <p className="text-center text-[11px] text-cream-50/45 tracking-wide -mt-2 mb-4">
-        drag to spin
+      <p className="text-center text-[11px] text-cream-50/45 tracking-wide mt-1 mb-4">
+        drag any bottle to spin
       </p>
 
       <div className="flex flex-wrap justify-center gap-2.5 px-6 pb-16 relative z-10">
-        {FLAVORS.map((f, i) => (
-          <button
+        {FLAVORS.map((f) => (
+          <span
             key={f.name}
-            onClick={() => setActiveFlavor(i)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${
-              activeFlavor === i
-                ? "bg-gold-500 text-navy-900 font-bold"
-                : "bg-white/5 border border-white/10 text-cream-50/85 hover:bg-white/10"
-            }`}
+            className="bg-white/5 border border-white/10 text-cream-50/85 rounded-full px-3 py-1.5 text-xs"
           >
             {f.name}
-          </button>
+          </span>
         ))}
       </div>
     </div>
