@@ -40,3 +40,4 @@ frontend/
 │   └── index.css           # Tailwind + design tokens
 ├── tailwind.config.js      # navy/gold/cream colors, Sora/Inter fonts
 ```
+
