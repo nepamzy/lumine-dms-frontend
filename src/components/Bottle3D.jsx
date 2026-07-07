@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-// Wraps a front image and back image onto a cylindrical bottle mesh that
-// genuinely rotates in 3D — as it turns, you see the real front label,
-// then blank sides, then the real back label, not a flat photo swap.
+// Wraps your real front and back bottle photos onto a simple cylinder
+// that rotates in 3D — front photo shows on the front half, back photo
+// on the back half, exactly as photographed.
 export default function Bottle3D({ frontImage, backImage, autoRotate = true }) {
   const containerRef = useRef(null);
 
@@ -23,7 +23,6 @@ export default function Bottle3D({ frontImage, backImage, autoRotate = true }) {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // Lighting — soft ambient + a key light for believable shading
     scene.add(new THREE.AmbientLight(0xffffff, 0.9));
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
     keyLight.position.set(2, 3, 4);
@@ -33,26 +32,19 @@ export default function Bottle3D({ frontImage, backImage, autoRotate = true }) {
     const group = new THREE.Group();
     scene.add(group);
 
-    // Safety-net solid backing so any thin gaps in the label wrap show
-    // white/cream (like the yoghurt inside) instead of the page background.
-    const backingGeo = new THREE.CylinderGeometry(0.95, 0.95, 2.5, 32);
+    const backingGeo = new THREE.CylinderGeometry(0.95, 0.95, 2.6, 32);
     const backingMat = new THREE.MeshStandardMaterial({ color: 0xfdfaf3, roughness: 0.6 });
-    const backingMesh = new THREE.Mesh(backingGeo, backingMat);
-    group.add(backingMesh);
+    group.add(new THREE.Mesh(backingGeo, backingMat));
 
-    let frontMesh, backMesh;
     loader.load(frontImage, (frontTex) => {
       frontTex.colorSpace = THREE.SRGBColorSpace;
       const frontMat = new THREE.MeshStandardMaterial({
         map: frontTex,
         transparent: true,
         roughness: 0.35,
-        metalness: 0,
       });
-      // Half-cylinder facing forward (front label)
       const frontGeo = new THREE.CylinderGeometry(1, 1, 2.6, 64, 1, true, -Math.PI / 2, Math.PI);
-      frontMesh = new THREE.Mesh(frontGeo, frontMat);
-      group.add(frontMesh);
+      group.add(new THREE.Mesh(frontGeo, frontMat));
     });
 
     loader.load(backImage, (backTex) => {
@@ -61,13 +53,10 @@ export default function Bottle3D({ frontImage, backImage, autoRotate = true }) {
         map: backTex,
         transparent: true,
         roughness: 0.35,
-        metalness: 0,
       });
-      // Half-cylinder facing backward (back label) — mirrored so text reads correctly
       const backGeo = new THREE.CylinderGeometry(1, 1, 2.6, 64, 1, true, Math.PI / 2, Math.PI);
       backGeo.scale(-1, 1, 1);
-      backMesh = new THREE.Mesh(backGeo, backMat);
-      group.add(backMesh);
+      group.add(new THREE.Mesh(backGeo, backMat));
     });
 
     let rotationY = 0;
