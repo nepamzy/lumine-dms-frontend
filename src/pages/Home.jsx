@@ -1,13 +1,19 @@
 import { Link } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import FAQ from "../components/FAQ";
 import fullcreamFront from "../assets/fullcream-1L-front.png";
+import fullcreamBack from "../assets/fullcream-1L-back.png";
 import liteFront from "../assets/lite-1L-front.png";
+import liteBack from "../assets/lite-1L-back.png";
 import sugarfreeFront from "../assets/sugarfree-1L-front.png";
+import sugarfreeBack from "../assets/sugarfree-1L-back.png";
+
+const BottleCarousel = lazy(() => import("../components/BottleCarousel"));
 
 const FLAVORS = [
-  { name: "Full Cream", image: fullcreamFront, color: "#0A2D6F" },
-  { name: "Sugar Free", image: sugarfreeFront, color: "#2E9E44" },
-  { name: "Lite", image: liteFront, color: "#2E9E44" },
+  { name: "Full Cream", front: fullcreamFront, back: fullcreamBack, color: "#0A2D6F" },
+  { name: "Sugar Free", front: sugarfreeFront, back: sugarfreeBack, color: "#2E9E44" },
+  { name: "Lite", front: liteFront, back: liteBack, color: "#2E9E44" },
 ];
 
 export default function Home() {
@@ -57,29 +63,16 @@ export default function Home() {
           Full Cream, Sugar Free, and Lite — something for every customer.
         </p>
 
-        <div className="bg-navy-900/[0.03] rounded-card p-8 mb-8">
-          <div className="flex justify-center items-end gap-6 md:gap-12">
-            {FLAVORS.map((f) => (
-              <img
-                key={f.name}
-                src={f.image}
-                alt={`Lumine ${f.name} yoghurt bottle`}
-                className="h-40 md:h-56 object-contain"
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-3">
-          {FLAVORS.map((f) => (
-            <span
-              key={f.name}
-              className="text-cream-50 rounded-full px-5 py-2.5 text-sm font-semibold"
-              style={{ backgroundColor: f.color }}
-            >
-              {f.name}
-            </span>
-          ))}
+        <div className="bg-navy-900/[0.03] rounded-card p-8 mb-2">
+          <Suspense
+            fallback={
+              <div className="h-[340px] flex items-center justify-center text-navy-900/40 text-sm">
+                Loading 3D preview…
+              </div>
+            }
+          >
+            <BottleCarousel flavors={FLAVORS} />
+          </Suspense>
         </div>
       </section>
 

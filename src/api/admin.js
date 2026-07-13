@@ -63,3 +63,8 @@ export async function listCustomers() {
   const { data } = await api.get("/admin/customers");
   return data.data;
 }
+
+export async function reassignCustomerDistributor(customerId, distributorId) {
+  const { data } = await api.patch(`/admin/customers/${customerId}/distributor`, { distributorId });
+  return data.data;
+}

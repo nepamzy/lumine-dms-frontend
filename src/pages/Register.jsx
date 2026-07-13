@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import STATE_LGAS from "../data/nigeria-states-lgas.json";
 
-const NIGERIAN_STATES = [
-  "Lagos", "Kaduna", "Abuja", "Rivers", "Oyo", "Kano", "Ogun", "Enugu", "Delta", "Other",
-];
+const NIGERIAN_STATES = Object.keys(STATE_LGAS);
 
 const CUSTOMER_TYPES = [
   { value: "supermarket", label: "Supermarket" },
@@ -27,6 +26,7 @@ export default function Register() {
     phone: "",
     password: "",
     state: "Lagos",
+    localGovernment: STATE_LGAS["Lagos"][0],
     businessName: "",
     customerType: "retailer",
     deliveryAddress: "",
@@ -38,7 +38,21 @@ export default function Register() {
   const navigate = useNavigate();
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-const getLocation = () => {
+
+  const updateState = (e) => {
+    const newState = e.target.value;
+    setForm((f) => ({
+      ...f,
+      state: newState,
+      localGovernment: STATE_LGAS[newState]?.[0] || "",
+    }));
+  };
+
+  // Captures a distributor's referral code from ?ref=CODE in the signup link,
+  // so the new customer auto-attaches to that distributor on creation.
+  const referralCode = searchParams.get("ref") || null;
+
+  const getLocation = () => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
         resolve({ latitude: null, longitude: null });
@@ -58,7 +72,7 @@ const getLocation = () => {
     setSubmitting(true);
     try {
       const { latitude, longitude } = await getLocation();
-      const result = await register({ ...form, role, latitude, longitude });
+      const result = await register({ ...form, role, latitude, longitude, referralCode });
       setSuccess(result.message || "Account created. You can now sign in.");
       setTimeout(() => navigate("/login"), 1800);
     } catch (err) {
@@ -74,6 +88,13 @@ const getLocation = () => {
       <p className="text-navy-900/60 text-sm mb-6">
         Join Lumine as a customer or apply to become a distributor.
       </p>
+
+      {referralCode && (
+        <div className="bg-green-500/10 border border-green-500/25 rounded-md px-4 py-3 mb-6 text-sm text-navy-900">
+          You're signing up via a distributor referral. You'll be automatically linked to
+          them once your account is created.
+        </div>
+      )}
 
       <div className="flex gap-2 mb-6">
         {["customer", "distributor"].map((r) => (
@@ -106,9 +127,16 @@ const getLocation = () => {
           <input type="password" required minLength={8} value={form.password} onChange={update("password")} className="input" />
         </Field>
         <Field label="State">
-          <select value={form.state} onChange={update("state")} className="input">
+          <select value={form.state} onChange={updateState} className="input">
             {NIGERIAN_STATES.map((s) => (
               <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Local Government Area">
+          <select value={form.localGovernment} onChange={update("localGovernment")} className="input">
+            {(STATE_LGAS[form.state] || []).map((lga) => (
+              <option key={lga} value={lga}>{lga}</option>
             ))}
           </select>
         </Field>

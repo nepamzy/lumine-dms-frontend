@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Overview from "./admin/Overview";
 import Products from "./admin/Products";
 import Orders from "./admin/Orders";
 import Distributors from "./admin/Distributors";
 import Customers from "./admin/Customers";
+
+const AdminMap = lazy(() => import("./admin/AdminMap"));
 
 const TABS = [
   { key: "overview", label: "Overview", Component: Overview },
@@ -11,6 +13,15 @@ const TABS = [
   { key: "orders", label: "Orders", Component: Orders },
   { key: "distributors", label: "Distributors", Component: Distributors },
   { key: "customers", label: "Customers", Component: Customers },
+  {
+    key: "map",
+    label: "Map",
+    Component: () => (
+      <Suspense fallback={<p className="text-navy-900/60">Loading map…</p>}>
+        <AdminMap />
+      </Suspense>
+    ),
+  },
 ];
 
 export default function AdminDashboard() {

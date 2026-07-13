@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getMyRoute, markDelivered, markFailed, updateGps } from "../api/deliveries";
 import { listMyOrders } from "../api/orders";
+import { getMyReferral } from "../api/distributor";
 
 const STATUS_COLORS = {
   assigned: "bg-gold-500/20 text-gold-700",
@@ -113,15 +114,28 @@ export default function DistributorDashboard() {
   const [tab, setTab] = useState("route");
   const [route, setRoute] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [referral, setReferral] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   const refreshRoute = () => getMyRoute().then(setRoute);
   const refreshOrders = () => listMyOrders().then(setOrders);
+  const refreshReferral = () => getMyReferral().then(setReferral).catch(() => setReferral(null));
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([refreshRoute(), refreshOrders()]).finally(() => setLoading(false));
+    Promise.all([refreshRoute(), refreshOrders(), refreshReferral()]).finally(() => setLoading(false));
   }, []);
+
+  const referralLink = referral
+    ? `${window.location.origin}/register?ref=${referral.referralCode}`
+    : "";
+
+  const copyReferralLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
@@ -131,7 +145,7 @@ export default function DistributorDashboard() {
       <p className="text-navy-900/60 text-sm mb-6">Distributor dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
-        {["route", "orders"].map((t) => (
+        {["route", "orders", "referral"].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -141,7 +155,7 @@ export default function DistributorDashboard() {
                 : "border-transparent text-navy-900/50 hover:text-navy-900"
             }`}
           >
-            {t === "route" ? `Today's Route (${route.length})` : "All Orders"}
+            {t === "route" ? `Today's Route (${route.length})` : t === "orders" ? "All Orders" : "Referral"}
           </button>
         ))}
       </div>
@@ -165,6 +179,51 @@ export default function DistributorDashboard() {
             ))}
           </div>
         )
+      ) : tab === "referral" ? (
+        <div className="flex flex-col gap-5">
+          <div className="bg-white rounded-card shadow-card p-6">
+            <h3 className="font-display font-bold text-navy-900 mb-1">Your referral link</h3>
+            <p className="text-sm text-navy-900/60 mb-4">
+              Share this link with new customers. Anyone who signs up through it is
+              automatically linked to your account.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                readOnly
+                value={referralLink}
+                onClick={(e) => e.target.select()}
+                className="input flex-1 text-sm text-navy-900/80"
+              />
+              <button
+                onClick={copyReferralLink}
+                className="bg-gold-500 text-navy-900 font-bold text-sm px-5 py-3 rounded-md hover:bg-gold-700 transition-colors whitespace-nowrap"
+              >
+                {copied ? "Copied ✓" : "Copy Link"}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-card shadow-card p-5 text-center">
+              <p className="font-display font-extrabold text-3xl text-navy-900">
+                {referral?.referredCount ?? "—"}
+              </p>
+              <p className="text-sm text-navy-900/55 mt-1">Referred customers</p>
+            </div>
+            <div className="bg-white rounded-card shadow-card p-5 text-center">
+              <p className="font-display font-extrabold text-3xl text-navy-900">
+                {referral?.assignedCount ?? "—"}
+              </p>
+              <p className="text-sm text-navy-900/55 mt-1">Currently assigned to you</p>
+            </div>
+          </div>
+
+          <p className="text-xs text-navy-900/40">
+            Note: "assigned" customers can differ from "referred" — admin may reassign a
+            customer to another distributor for delivery efficiency, but the original
+            referral is always kept on record.
+          </p>
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
           {orders.map((o) => (

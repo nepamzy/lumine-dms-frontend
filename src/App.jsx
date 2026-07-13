@@ -4,6 +4,7 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Home from "./pages/Home";
+import About from "./pages/About";
 import Catalog from "./pages/Catalog";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
@@ -22,6 +23,7 @@ export default function App() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />

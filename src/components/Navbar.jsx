@@ -32,6 +32,9 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-7 text-sm text-cream-50/80">
+          <Link to="/about" className="hover:text-gold-500 transition-colors">
+            About
+          </Link>
           <Link to="/catalog" className="hover:text-gold-500 transition-colors">
             Catalog
           </Link>
@@ -113,7 +116,7 @@ export default function Navbar() {
             <Link to="/" onClick={closeMenu} className="py-4">
               Home
             </Link>
-            <Link to="/#about" onClick={closeMenu} className="py-4">
+            <Link to="/about" onClick={closeMenu} className="py-4">
               About
             </Link>
             <Link to="/catalog" onClick={closeMenu} className="py-4">
