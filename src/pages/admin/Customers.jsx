@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { listCustomers, listDistributors, reassignCustomerDistributor } from "../../api/admin";
+import { listCustomers, listDistributors, reassignCustomerDistributor, getCustomerHistory } from "../../api/admin";
+import ActivityHistoryModal from "../../components/ActivityHistoryModal";
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [distributors, setDistributors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+  const [historyFor, setHistoryFor] = useState(null); // customer id currently open in modal
+  const [historyData, setHistoryData] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const refresh = () => listCustomers().then(setCustomers);
 
@@ -26,6 +30,22 @@ export default function Customers() {
     }
   };
 
+  const openHistory = async (customerId) => {
+    setHistoryFor(customerId);
+    setHistoryLoading(true);
+    try {
+      const data = await getCustomerHistory(customerId);
+      setHistoryData(data);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const closeHistory = () => {
+    setHistoryFor(null);
+    setHistoryData(null);
+  };
+
   return (
     <div>
       <h2 className="font-display font-bold text-xl text-navy-900 mb-5">Customers</h2>
@@ -37,7 +57,11 @@ export default function Customers() {
       ) : (
         <div className="flex flex-col gap-3">
           {customers.map((c) => (
-            <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div
+              key={c.id}
+              onClick={() => openHistory(c.id)}
+              className="bg-white rounded-card shadow-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow"
+            >
               <div>
                 <p className="font-semibold text-navy-900">
                   {c.business_name || c.full_name}
@@ -66,6 +90,7 @@ export default function Customers() {
                 <select
                   value={c.assigned_distributor_id || ""}
                   disabled={savingId === c.id}
+                  onClick={(e) => e.stopPropagation()}
                   onChange={(e) => handleReassign(c.id, e.target.value)}
                   className="text-xs border border-navy-900/15 rounded-md px-2 py-1.5 disabled:opacity-50"
                 >
@@ -80,6 +105,15 @@ export default function Customers() {
             </div>
           ))}
         </div>
+      )}
+
+      {historyFor && (
+        <ActivityHistoryModal
+          type="customer"
+          data={historyData}
+          loading={historyLoading}
+          onClose={closeHistory}
+        />
       )}
     </div>
   );

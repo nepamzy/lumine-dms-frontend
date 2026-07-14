@@ -68,3 +68,13 @@ export async function reassignCustomerDistributor(customerId, distributorId) {
   const { data } = await api.patch(`/admin/customers/${customerId}/distributor`, { distributorId });
   return data.data;
 }
+
+export async function getCustomerHistory(customerId) {
+  const { data } = await api.get(`/admin/customers/${customerId}/history`);
+  return data.data;
+}
+
+export async function getDistributorHistory(distributorId) {
+  const { data } = await api.get(`/admin/distributors/${distributorId}/history`);
+  return data.data;
+}
