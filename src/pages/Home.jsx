@@ -31,7 +31,7 @@ const FLAVORS = [
   },
   {
     name: "Lite",
-    color: "#2E9E44",
+    color: "#0F4DB8",
     sizes: [
       { label: "35cl", image: lite35cl },
       { label: "50cl", image: lite50cl },
