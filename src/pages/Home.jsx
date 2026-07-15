@@ -1,19 +1,43 @@
 import { Link } from "react-router-dom";
-import { lazy, Suspense } from "react";
 import FAQ from "../components/FAQ";
-import fullcreamFront from "../assets/fullcream-1L-front.png";
-import fullcreamBack from "../assets/fullcream-1L-back.png";
-import liteFront from "../assets/lite-1L-front.png";
-import liteBack from "../assets/lite-1L-back.png";
-import sugarfreeFront from "../assets/sugarfree-1L-front.png";
-import sugarfreeBack from "../assets/sugarfree-1L-back.png";
-
-const BottleCarousel = lazy(() => import("../components/BottleCarousel"));
+import fullcream1L from "../assets/fullcream-1L.png";
+import fullcream50cl from "../assets/fullcream-50cl.png";
+import fullcream35cl from "../assets/fullcream-35cl.png";
+import lite1L from "../assets/lite-1L.png";
+import lite50cl from "../assets/lite-50cl.png";
+import lite35cl from "../assets/lite-35cl.png";
+import sugarfree1L from "../assets/sugarfree-1L.png";
+import sugarfree50cl from "../assets/sugarfree-50cl.png";
+import sugarfree35cl from "../assets/sugarfree-35cl.png";
 
 const FLAVORS = [
-  { name: "Full Cream", front: fullcreamFront, back: fullcreamBack, color: "#0A2D6F" },
-  { name: "Sugar Free", front: sugarfreeFront, back: sugarfreeBack, color: "#2E9E44" },
-  { name: "Lite", front: liteFront, back: liteBack, color: "#2E9E44" },
+  {
+    name: "Full Cream",
+    color: "#0A2D6F",
+    sizes: [
+      { label: "35cl", image: fullcream35cl },
+      { label: "50cl", image: fullcream50cl },
+      { label: "1 Litre", image: fullcream1L },
+    ],
+  },
+  {
+    name: "Sugar Free",
+    color: "#2E9E44",
+    sizes: [
+      { label: "35cl", image: sugarfree35cl },
+      { label: "50cl", image: sugarfree50cl },
+      { label: "1 Litre", image: sugarfree1L },
+    ],
+  },
+  {
+    name: "Lite",
+    color: "#2E9E44",
+    sizes: [
+      { label: "35cl", image: lite35cl },
+      { label: "50cl", image: lite50cl },
+      { label: "1 Litre", image: lite1L },
+    ],
+  },
 ];
 
 export default function Home() {
@@ -63,16 +87,35 @@ export default function Home() {
           Full Cream, Sugar Free, and Lite — something for every customer.
         </p>
 
-        <div className="bg-navy-900/[0.03] rounded-card p-8 mb-2">
-          <Suspense
-            fallback={
-              <div className="h-[340px] flex items-center justify-center text-navy-900/40 text-sm">
-                Loading 3D preview…
+        <div className="grid gap-6 sm:grid-cols-3">
+          {FLAVORS.map((f) => (
+            <div key={f.name} className="bg-white rounded-card shadow-card p-6">
+              <span
+                className="inline-block text-cream-50 rounded-full px-4 py-1.5 text-xs font-bold mb-5"
+                style={{ backgroundColor: f.color }}
+              >
+                {f.name}
+              </span>
+              <div className="flex items-end justify-center gap-4">
+                {f.sizes.map((s) => (
+                  <div key={s.label} className="flex flex-col items-center">
+                    <img
+                      src={s.image}
+                      alt={`Lumine ${f.name} ${s.label}`}
+                      className={
+                        s.label === "1 Litre"
+                          ? "h-32 md:h-36 object-contain drop-shadow-sm"
+                          : s.label === "50cl"
+                          ? "h-24 md:h-28 object-contain drop-shadow-sm"
+                          : "h-16 md:h-20 object-contain drop-shadow-sm"
+                      }
+                    />
+                    <span className="text-xs font-semibold text-navy-900/60 mt-2">{s.label}</span>
+                  </div>
+                ))}
               </div>
-            }
-          >
-            <BottleCarousel flavors={FLAVORS} />
-          </Suspense>
+            </div>
+          ))}
         </div>
       </section>
 
