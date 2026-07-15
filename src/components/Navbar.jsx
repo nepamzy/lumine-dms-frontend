@@ -53,13 +53,13 @@ export default function Navbar() {
           )}
           {!user && (
             <Link to="/register" className="hover:text-gold-500 transition-colors">
-              Become a Distributor/Customer
+              Join Lumine
             </Link>
           )}
         </div>
 
         <div className="flex items-center gap-4">
-          {user?.role === "customer" && (
+          {(user?.role === "customer" || user?.role === "distributor") && (
             <Link to="/cart" className="relative text-sm">
               Cart
               {items.length > 0 && (
@@ -123,7 +123,13 @@ export default function Navbar() {
               Products
             </Link>
             <Link to="/register?role=distributor" onClick={closeMenu} className="py-4">
-              Distributors
+              Become a Distributor
+            </Link>
+            <Link to="/register?role=sales_rep" onClick={closeMenu} className="py-4">
+              Become a Sales Rep
+            </Link>
+            <Link to="/register?role=customer" onClick={closeMenu} className="py-4">
+              Become a Customer
             </Link>
             <Link to="/#faqs" onClick={closeMenu} className="py-4">
               FAQs

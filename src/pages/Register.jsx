@@ -17,9 +17,11 @@ const CUSTOMER_TYPES = [
 
 export default function Register() {
   const [searchParams] = useSearchParams();
-  const defaultRole = searchParams.get("role") === "distributor" ? "distributor" : "customer";
+  const roleParam = searchParams.get("role");
+  const defaultKind =
+    roleParam === "distributor" || roleParam === "sales_rep" ? roleParam : "customer";
 
-  const [role, setRole] = useState(defaultRole);
+  const [kind, setKind] = useState(defaultKind); // "customer" | "sales_rep" | "distributor"
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -72,7 +74,9 @@ export default function Register() {
     setSubmitting(true);
     try {
       const { latitude, longitude } = await getLocation();
-      const result = await register({ ...form, role, latitude, longitude, referralCode });
+      const role = kind === "customer" ? "customer" : "distributor";
+      const distributorType = kind === "distributor" ? "distributor" : kind === "sales_rep" ? "sales_rep" : undefined;
+      const result = await register({ ...form, role, distributorType, latitude, longitude, referralCode });
       setSuccess(result.message || "Account created. You can now sign in.");
       setTimeout(() => navigate("/login"), 1800);
     } catch (err) {
@@ -86,29 +90,33 @@ export default function Register() {
     <div className="max-w-md mx-auto px-6 py-16">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Create your account</h1>
       <p className="text-navy-900/60 text-sm mb-6">
-        Join Lumine as a customer or apply to become a distributor.
+        Join Lumine as a customer, sales rep, or distributor.
       </p>
 
       {referralCode && (
         <div className="bg-green-500/10 border border-green-500/25 rounded-md px-4 py-3 mb-6 text-sm text-navy-900">
-          You're signing up via a distributor referral. You'll be automatically linked to
-          them once your account is created.
+          You're signing up via a referral link. You'll be automatically linked to
+          the person who shared it once your account is created.
         </div>
       )}
 
       <div className="flex gap-2 mb-6">
-        {["customer", "distributor"].map((r) => (
+        {[
+          { value: "customer", label: "Customer" },
+          { value: "sales_rep", label: "Sales Rep" },
+          { value: "distributor", label: "Distributor" },
+        ].map((k) => (
           <button
-            key={r}
+            key={k.value}
             type="button"
-            onClick={() => setRole(r)}
+            onClick={() => setKind(k.value)}
             className={`flex-1 text-sm font-semibold py-2.5 rounded-md border transition-colors ${
-              role === r
+              kind === k.value
                 ? "bg-navy-800 text-cream-50 border-navy-800"
                 : "bg-white text-navy-900/60 border-navy-900/15"
             }`}
           >
-            {r === "customer" ? "Customer" : "Distributor"}
+            {k.label}
           </button>
         ))}
       </div>
@@ -141,7 +149,7 @@ export default function Register() {
           </select>
         </Field>
 
-        {role === "customer" ? (
+        {kind === "customer" ? (
           <>
            <Field label="Business name (optional)">
             <input value={form.businessName} onChange={update("businessName")} className="input" />
@@ -163,9 +171,9 @@ export default function Register() {
           </Field>
         )}
 
-        {role === "distributor" && (
+        {kind !== "customer" && (
           <p className="text-xs text-navy-900/50 bg-navy-900/5 rounded-md p-3">
-            Distributor accounts require admin approval before you can sign in.
+            {kind === "distributor" ? "Distributor" : "Sales rep"} accounts require admin approval before you can sign in.
           </p>
         )}
 

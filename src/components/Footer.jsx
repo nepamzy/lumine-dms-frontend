@@ -59,6 +59,11 @@ export default function Footer() {
               </Link>
             </li>
             <li>
+              <Link to="/register?role=sales_rep" className="hover:text-gold-500 transition-colors">
+                Sales Rep Opportunities
+              </Link>
+            </li>
+            <li>
               <Link to="/login" className="hover:text-gold-500 transition-colors">
                 Customer Login
               </Link>

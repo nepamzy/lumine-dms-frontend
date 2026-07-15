@@ -111,6 +111,96 @@ function DeliveryCard({ delivery, onDelivered, onFailed }) {
 
 export default function DistributorDashboard() {
   const { user } = useAuth();
+  const isDistributor = user?.distributor_type === "distributor";
+  const roleLabel = isDistributor ? "Distributor" : "Sales Rep";
+
+  if (isDistributor) {
+    return <DistributorSimpleDashboard user={user} />;
+  }
+
+  return <SalesRepDashboard user={user} roleLabel={roleLabel} />;
+}
+
+// The "true" distributor: buys at discount, has a cart, and can refer other
+// distributors — but only sees a headcount, not a managed list (unlike a
+// Sales Rep, who sees each attached customer individually).
+function DistributorSimpleDashboard({ user }) {
+  const [referral, setReferral] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    getMyReferral()
+      .then(setReferral)
+      .catch(() => setReferral(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const referralLink = referral
+    ? `${window.location.origin}/register?ref=${referral.referralCode}`
+    : "";
+
+  const copyReferralLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-10">
+      <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">
+        Welcome, {user?.full_name?.split(" ")[0]}
+      </h1>
+      <p className="text-navy-900/60 text-sm mb-8">Distributor dashboard</p>
+
+      {loading ? (
+        <p className="text-navy-900/60">Loading…</p>
+      ) : (
+        <div className="flex flex-col gap-5">
+          <div className="bg-white rounded-card shadow-card p-6">
+            <h3 className="font-display font-bold text-navy-900 mb-1">
+              Bring in other distributors
+            </h3>
+            <p className="text-sm text-navy-900/60 mb-4">
+              Share this link with other distributors. Anyone who signs up through it
+              counts toward your total below — you won't manage them directly, this is
+              purely for tracking.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                readOnly
+                value={referralLink}
+                onClick={(e) => e.target.select()}
+                className="input flex-1 text-sm text-navy-900/80"
+              />
+              <button
+                onClick={copyReferralLink}
+                className="bg-gold-500 text-navy-900 font-bold text-sm px-5 py-3 rounded-md hover:bg-gold-700 transition-colors whitespace-nowrap"
+              >
+                {copied ? "Copied ✓" : "Copy Link"}
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-card shadow-card p-5 text-center">
+            <p className="font-display font-extrabold text-3xl text-navy-900">
+              {referral?.referredCount ?? "—"}
+            </p>
+            <p className="text-sm text-navy-900/55 mt-1">Distributors referred by you</p>
+          </div>
+
+          <div className="bg-navy-900/[0.03] rounded-card p-5 text-sm text-navy-900/60">
+            Order tracking with production, transport, and payment status is coming
+            here soon. For now, use the Catalog and Cart to place orders.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SalesRepDashboard({ user, roleLabel }) {
   const [tab, setTab] = useState("route");
   const [route, setRoute] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -142,7 +232,7 @@ export default function DistributorDashboard() {
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">
         Welcome, {user?.full_name?.split(" ")[0]}
       </h1>
-      <p className="text-navy-900/60 text-sm mb-6">Distributor dashboard</p>
+      <p className="text-navy-900/60 text-sm mb-6">{roleLabel} dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
         {["route", "orders", "referral"].map((t) => (

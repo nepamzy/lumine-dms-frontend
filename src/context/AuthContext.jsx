@@ -28,9 +28,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    const loggedInUser = await authApi.login(email, password);
-    setUser(loggedInUser);
-    return loggedInUser;
+    await authApi.login(email, password);
+    // authApi.login's user row doesn't include joined fields like
+    // distributor_type — fetch the full profile so role-based UI (e.g.
+    // sales rep vs distributor dashboard) is correct from the first render.
+    const { data } = await api.get("/auth/me");
+    setUser(data.data);
+    return data.data;
   }, []);
 
   const register = useCallback(async (payload) => {

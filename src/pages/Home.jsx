@@ -144,6 +144,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Join Lumine — 3-way CTA */}
+      <section className="bg-navy-900/[0.03] py-16">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="font-display font-extrabold text-2xl md:text-3xl text-navy-900 mb-2">
+            Join Lumine
+          </h2>
+          <p className="text-navy-900/55 text-sm mb-10 max-w-md mx-auto">
+            However you want to work with us, there's a place for you.
+          </p>
+          <div className="grid gap-5 sm:grid-cols-3">
+            <Link
+              to="/register?role=distributor"
+              className="bg-white rounded-card shadow-card p-6 hover:shadow-md transition-shadow"
+            >
+              <h3 className="font-display font-bold text-navy-900 mb-1">Become a Distributor</h3>
+              <p className="text-sm text-navy-900/55">
+                Buy at discount, resell in your territory, and refer other distributors.
+              </p>
+            </Link>
+            <Link
+              to="/register?role=sales_rep"
+              className="bg-white rounded-card shadow-card p-6 hover:shadow-md transition-shadow"
+            >
+              <h3 className="font-display font-bold text-navy-900 mb-1">Become a Sales Rep</h3>
+              <p className="text-sm text-navy-900/55">
+                Bring in customers, place orders on their behalf, and grow your book.
+              </p>
+            </Link>
+            <Link
+              to="/register?role=customer"
+              className="bg-white rounded-card shadow-card p-6 hover:shadow-md transition-shadow"
+            >
+              <h3 className="font-display font-bold text-navy-900 mb-1">Become a Customer</h3>
+              <p className="text-sm text-navy-900/55">
+                Order fresh Lumine yoghurt for your business, delivered to your door.
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <FAQ />
     </div>
   );
