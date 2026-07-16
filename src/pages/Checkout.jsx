@@ -1,28 +1,45 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart, resolveTierPrice } from "../context/CartContext";
-import { createOrder, initializePayment } from "../api/orders";
+import { useAuth } from "../context/AuthContext";
+import { createOrder } from "../api/orders";
+import { acknowledgePaymentNotice } from "../api/auth";
 
 export default function Checkout() {
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, forCustomer } = useCart();
+  const { user, refreshUser } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [ackChecked, setAckChecked] = useState(false);
+  const [acknowledging, setAcknowledging] = useState(false);
   const navigate = useNavigate();
 
-  const handlePay = async () => {
+  const needsAcknowledgment = user?.role === "customer" && !user?.acknowledged_payment_notice;
+
+  const handleAcknowledge = async () => {
+    setAcknowledging(true);
+    try {
+      await acknowledgePaymentNotice();
+      await refreshUser();
+    } finally {
+      setAcknowledging(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
     setSubmitting(true);
     setError(null);
     try {
       const order = await createOrder(
-        items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
+        items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+        forCustomer?.id
       );
-      const { authorizationUrl } = await initializePayment(order.id);
       clearCart();
-      window.location.href = authorizationUrl; // hand off to Paystack's hosted checkout
+      navigate(`/orders/${order.id}`);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "We couldn't start your order. Please review your cart and try again."
+          "We couldn't place your order. Please review your cart and try again."
       );
       setSubmitting(false);
     }
@@ -33,12 +50,51 @@ export default function Checkout() {
     return null;
   }
 
+  if (needsAcknowledgment) {
+    return (
+      <div className="max-w-lg mx-auto px-6 py-16">
+        <div className="bg-white rounded-card shadow-card p-6">
+          <h1 className="font-display font-bold text-xl text-navy-900 mb-4">Before you order</h1>
+          <p className="text-sm text-navy-900/70 leading-relaxed mb-5">
+            All payment for your Lumine orders happens right here on this platform. We don't
+            accept payment in cash, by hand, or through any channel outside your order page —
+            if it didn't go through the "Log Payment" button on your order, it isn't recorded
+            as paid and won't count toward your order. This protects you: every payment you
+            make is tracked, timestamped, and visible to you at any time.
+          </p>
+          <label className="flex items-start gap-2.5 text-sm text-navy-900/80 mb-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={ackChecked}
+              onChange={(e) => setAckChecked(e.target.checked)}
+              className="mt-0.5"
+            />
+            I understand that all payment happens on this platform, and no payment made
+            outside it will be considered valid.
+          </label>
+          <button
+            disabled={!ackChecked || acknowledging}
+            onClick={handleAcknowledge}
+            className="w-full bg-gold-500 text-navy-900 font-bold py-3 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
+          >
+            {acknowledging ? "Continuing…" : "Continue to Checkout"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-xl mx-auto px-6 py-16">
-      <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Review & Pay</h1>
+      <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Review & Place Order</h1>
       <p className="text-navy-900/60 text-sm mb-8">
-        You'll be redirected to Paystack to complete payment securely.
+        You'll pay after placing your order — from your order page, any time.
       </p>
+      {forCustomer && (
+        <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-6 text-sm font-semibold">
+          Placing this order on behalf of {forCustomer.name}. They'll handle payment from their own order page.
+        </div>
+      )}
       <div className="bg-white rounded-card shadow-card p-5 mb-6">
         {items.map((item) => {
           const unitPrice = resolveTierPrice(item.priceTiers, item.quantity);
@@ -60,11 +116,11 @@ export default function Checkout() {
       </div>
       {error && <p className="text-status-danger text-sm mb-4">{error}</p>}
       <button
-        onClick={handlePay}
+        onClick={handlePlaceOrder}
         disabled={submitting}
         className="w-full bg-gold-500 text-navy-900 font-bold py-3.5 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
       >
-        {submitting ? "Starting payment…" : "Pay with Paystack"}
+        {submitting ? "Placing order…" : "Place Order"}
       </button>
     </div>
   );

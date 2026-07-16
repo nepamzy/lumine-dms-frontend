@@ -37,7 +37,6 @@ export default function Products() {
                 <th className="text-left px-4 py-3">SKU</th>
                 <th className="text-right px-4 py-3">Price</th>
                 <th className="text-right px-4 py-3">Stock</th>
-                <th className="text-left px-4 py-3">Nearest Expiry</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -48,9 +47,6 @@ export default function Products() {
                   <td className="px-4 py-3 text-navy-900/60">{p.sku}</td>
                   <td className="px-4 py-3 text-right">₦{Number(p.unit_price).toLocaleString()}</td>
                   <td className="px-4 py-3 text-right">{p.total_stock}</td>
-                  <td className="px-4 py-3 text-navy-900/60">
-                    {p.nearest_expiry ? new Date(p.nearest_expiry).toLocaleDateString() : "—"}
-                  </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => setBatchTarget(p)}

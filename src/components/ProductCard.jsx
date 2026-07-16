@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProductVariants } from "../api/products";
 import { resolveTierPrice } from "../context/CartContext";
+import { halfPackUnits, packLabelFor } from "../utils/packSizes";
 import fullcream35cl from "../assets/fullcream-35cl.png";
 import fullcream50cl from "../assets/fullcream-50cl.png";
 import fullcream1L from "../assets/fullcream-1L.png";
@@ -44,7 +45,7 @@ export default function ProductCard({ product, onAdd }) {
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [quantity, setQuantity] = useState(1);
+  const [halfPackCount, setHalfPackCount] = useState(1); // number of half-packs
 
   useEffect(() => {
     getProductVariants(product.id)
@@ -56,9 +57,18 @@ export default function ProductCard({ product, onAdd }) {
   }, [product.id]);
 
   const activeVariant = variants.find((v) => v.size === selectedSize);
+  const unitsPerHalfPack = halfPackUnits(selectedSize);
+  const quantity = halfPackCount * unitsPerHalfPack;
   const basePrice = activeVariant ? Number(activeVariant.priceTiers[0]?.price) : 0;
   const currentPrice = activeVariant ? resolveTierPrice(activeVariant.priceTiers, quantity) : 0;
   const isDiscounted = currentPrice < basePrice;
+
+  const handleSizeSelect = (size) => {
+    setSelectedSize(size);
+    setHalfPackCount(1); // reset to half-pack whenever size changes, pack sizes differ per size
+  };
+
+  const packLabel = packLabelFor(quantity, selectedSize);
 
   const handleAdd = () => {
     if (!activeVariant) return;
@@ -116,7 +126,7 @@ export default function ProductCard({ product, onAdd }) {
             {variants.map((v) => (
               <button
                 key={v.id}
-                onClick={() => setSelectedSize(v.size)}
+                onClick={() => handleSizeSelect(v.size)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-md border transition-colors ${
                   selectedSize === v.size
                     ? "bg-navy-800 text-cream-50 border-navy-800"
@@ -128,17 +138,26 @@ export default function ProductCard({ product, onAdd }) {
             ))}
           </div>
 
-          {/* Quantity input */}
-          <div className="flex items-center gap-2 mb-3">
-            <label className="text-xs text-navy-900/60">Qty (packs):</label>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-16 border border-navy-900/15 rounded-md px-2 py-1 text-sm"
-            />
+          {/* Half-pack quantity stepper — orders are placed in half-pack
+              increments, never single bottles */}
+          <div className="flex items-center gap-2 mb-1">
+            <button
+              type="button"
+              onClick={() => setHalfPackCount((n) => Math.max(1, n - 1))}
+              className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
+            >
+              −
+            </button>
+            <span className="text-sm font-semibold text-navy-900 w-24 text-center">{packLabel}</span>
+            <button
+              type="button"
+              onClick={() => setHalfPackCount((n) => n + 1)}
+              className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
+            >
+              +
+            </button>
           </div>
+          <p className="text-[11px] text-navy-900/45 mb-3">{quantity} bottles</p>
 
           {/* Price display */}
           <div className="mt-auto flex items-center justify-between">

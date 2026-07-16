@@ -2,16 +2,26 @@ import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import { listProducts } from "../api/products";
 import { useCart } from "../context/CartContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Catalog() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { addItem } = useCart();
+  const { addItem, forCustomer, setForCustomer } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const customerId = searchParams.get("forCustomer");
+    const customerName = searchParams.get("forCustomerName");
+    if (customerId && customerName) {
+      setForCustomer({ id: customerId, name: customerName });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     listProducts()
@@ -34,6 +44,13 @@ export default function Catalog() {
      <p className="text-navy-900/60 text-sm mb-8">
         3 flavours, all batch and expiry tracked for freshness.
       </p>
+
+      {forCustomer && (
+        <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-6 text-sm font-semibold flex items-center justify-between">
+          <span>Ordering on behalf of {forCustomer.name}</span>
+          <Link to="/cart" className="underline">View cart</Link>
+        </div>
+      )}
 
       {loading && <p className="text-navy-900/60">Loading products…</p>}
       {error && <p className="text-status-danger">{error}</p>}

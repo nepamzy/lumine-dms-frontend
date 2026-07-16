@@ -4,6 +4,7 @@ import Products from "./admin/Products";
 import Orders from "./admin/Orders";
 import Distributors from "./admin/Distributors";
 import Customers from "./admin/Customers";
+import ExpiringBatchesList from "../components/ExpiringBatchesList";
 
 const AdminMap = lazy(() => import("./admin/AdminMap"));
 
@@ -13,6 +14,7 @@ const TABS = [
   { key: "orders", label: "Orders", Component: Orders },
   { key: "distributors", label: "Distributors", Component: Distributors },
   { key: "customers", label: "Customers", Component: Customers },
+  { key: "expiring", label: "Expiring Batches", Component: ExpiringBatchesList },
   {
     key: "map",
     label: "Map",

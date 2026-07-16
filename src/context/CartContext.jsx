@@ -27,16 +27,31 @@ function loadCart(userId) {
 export function CartProvider({ children }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
+  const [forCustomer, setForCustomerState] = useState(null); // { id, name } when a sales rep is ordering on someone's behalf
 
   // Whenever the logged-in user changes (login/logout/switch account),
   // load that user's own cart instead of whatever was there before.
   useEffect(() => {
     setItems(loadCart(user?.id));
+    try {
+      const raw = localStorage.getItem(`lumine_cart_for_${user?.id}`);
+      setForCustomerState(raw ? JSON.parse(raw) : null);
+    } catch {
+      setForCustomerState(null);
+    }
   }, [user?.id]);
 
   useEffect(() => {
     localStorage.setItem(storageKey(user?.id), JSON.stringify(items));
   }, [items, user?.id]);
+
+  const setForCustomer = useCallback(
+    (customer) => {
+      setForCustomerState(customer);
+      localStorage.setItem(`lumine_cart_for_${user?.id}`, JSON.stringify(customer));
+    },
+    [user?.id]
+  );
 
   const addItem = useCallback((variant, productName, quantity = 1) => {
     setItems((prev) => {
@@ -71,7 +86,11 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)));
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setForCustomerState(null);
+    localStorage.removeItem(`lumine_cart_for_${user?.id}`);
+  }, [user?.id]);
 
   const total = useMemo(
     () =>
@@ -84,7 +103,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, total }}
+      value={{ items, addItem, removeItem, updateQuantity, clearCart, total, forCustomer, setForCustomer }}
     >
       {children}
     </CartContext.Provider>

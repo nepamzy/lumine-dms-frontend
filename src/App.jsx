@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import OrderDetail from "./pages/OrderDetail";
+import SiteVisitRemindersPopup from "./components/SiteVisitRemindersPopup";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import DistributorDashboard from "./pages/DistributorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -20,6 +22,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <SiteVisitRemindersPopup />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -33,7 +36,7 @@ export default function App() {
           <Route
             path="/cart"
             element={
-              <ProtectedRoute allowedRoles={["customer"]}>
+              <ProtectedRoute allowedRoles={["customer", "distributor"]}>
                 <Cart />
               </ProtectedRoute>
             }
@@ -41,8 +44,16 @@ export default function App() {
           <Route
             path="/checkout"
             element={
-              <ProtectedRoute allowedRoles={["customer"]}>
+              <ProtectedRoute allowedRoles={["customer", "distributor"]}>
                 <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute allowedRoles={["customer", "distributor", "admin"]}>
+                <OrderDetail />
               </ProtectedRoute>
             }
           />

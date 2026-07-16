@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMyRoute, markDelivered, markFailed, updateGps } from "../api/deliveries";
 import { listMyOrders } from "../api/orders";
-import { getMyReferral } from "../api/distributor";
+import { getMyReferral, listMyCustomers } from "../api/distributor";
+import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
+import ExpiringBatchesList from "../components/ExpiringBatchesList";
 
 const STATUS_COLORS = {
   assigned: "bg-gold-500/20 text-gold-700",
@@ -126,15 +129,16 @@ export default function DistributorDashboard() {
 // Sales Rep, who sees each attached customer individually).
 function DistributorSimpleDashboard({ user }) {
   const [referral, setReferral] = useState(null);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    getMyReferral()
-      .then(setReferral)
-      .catch(() => setReferral(null))
-      .finally(() => setLoading(false));
+    Promise.all([
+      getMyReferral().then(setReferral).catch(() => setReferral(null)),
+      listMyOrders().then(setOrders).catch(() => setOrders([])),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const referralLink = referral
@@ -190,9 +194,47 @@ function DistributorSimpleDashboard({ user }) {
             <p className="text-sm text-navy-900/55 mt-1">Distributors referred by you</p>
           </div>
 
-          <div className="bg-navy-900/[0.03] rounded-card p-5 text-sm text-navy-900/60">
-            Order tracking with production, transport, and payment status is coming
-            here soon. For now, use the Catalog and Cart to place orders.
+          <div>
+            <h3 className="font-display font-bold text-navy-900 mb-3">Your orders</h3>
+            {orders.length === 0 ? (
+              <div className="bg-navy-900/[0.03] rounded-card p-5 text-sm text-navy-900/60">
+                No orders yet. Use the Catalog and Cart to place one.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {orders.map((order) => {
+                  const band = getPaymentBand(order.paymentPercent);
+                  const styles = getPaymentBandStyles(band);
+                  return (
+                    <Link
+                      key={order.id}
+                      to={`/orders/${order.id}`}
+                      className="bg-white rounded-card shadow-card p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+                    >
+                      <div>
+                        <p className="font-semibold text-navy-900">{order.order_number}</p>
+                        <p className="text-xs text-navy-900/50">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-display font-bold text-navy-800 mb-1">
+                          ₦{Number(order.total_amount).toLocaleString()}
+                        </p>
+                        <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${styles.bg} ${styles.text}`}>
+                          {order.paymentPercent.toFixed(0)}% paid
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-display font-bold text-navy-900 mb-3">Expiring Batches</h3>
+            <ExpiringBatchesList />
           </div>
         </div>
       )}
@@ -205,16 +247,21 @@ function SalesRepDashboard({ user, roleLabel }) {
   const [route, setRoute] = useState([]);
   const [orders, setOrders] = useState([]);
   const [referral, setReferral] = useState(null);
+  const [myCustomers, setMyCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   const refreshRoute = () => getMyRoute().then(setRoute);
   const refreshOrders = () => listMyOrders().then(setOrders);
   const refreshReferral = () => getMyReferral().then(setReferral).catch(() => setReferral(null));
+  const refreshCustomers = () => listMyCustomers().then(setMyCustomers).catch(() => setMyCustomers([]));
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([refreshRoute(), refreshOrders(), refreshReferral()]).finally(() => setLoading(false));
+    Promise.all([refreshRoute(), refreshOrders(), refreshReferral(), refreshCustomers()]).finally(() =>
+      setLoading(false)
+    );
   }, []);
 
   const referralLink = referral
@@ -235,7 +282,7 @@ function SalesRepDashboard({ user, roleLabel }) {
       <p className="text-navy-900/60 text-sm mb-6">{roleLabel} dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
-        {["route", "orders", "referral"].map((t) => (
+        {["route", "orders", "referral", "place-order", "expiring"].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -245,7 +292,15 @@ function SalesRepDashboard({ user, roleLabel }) {
                 : "border-transparent text-navy-900/50 hover:text-navy-900"
             }`}
           >
-            {t === "route" ? `Today's Route (${route.length})` : t === "orders" ? "All Orders" : "Referral"}
+            {t === "route"
+              ? `Today's Route (${route.length})`
+              : t === "orders"
+              ? "All Orders"
+              : t === "referral"
+              ? "Referral"
+              : t === "place-order"
+              ? "Place Order"
+              : "Expiring Batches"}
           </button>
         ))}
       </div>
@@ -314,6 +369,35 @@ function SalesRepDashboard({ user, roleLabel }) {
             referral is always kept on record.
           </p>
         </div>
+      ) : tab === "place-order" ? (
+        <div className="flex flex-col gap-3">
+          {myCustomers.length === 0 ? (
+            <p className="text-navy-900/60 text-sm">
+              No customers assigned to you yet. Share your referral link to bring some in.
+            </p>
+          ) : (
+            myCustomers.map((c) => (
+              <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
+                  <p className="text-xs text-navy-900/50">{c.full_name} · {c.email}</p>
+                </div>
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/catalog?forCustomer=${c.id}&forCustomerName=${encodeURIComponent(c.business_name || c.full_name)}`
+                    )
+                  }
+                  className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2 rounded-md whitespace-nowrap"
+                >
+                  Place Order
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      ) : tab === "expiring" ? (
+        <ExpiringBatchesList />
       ) : (
         <div className="flex flex-col gap-3">
           {orders.map((o) => (
