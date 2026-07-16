@@ -1,7 +1,7 @@
 import api from "./client";
 
-export async function listProducts() {
-  const { data } = await api.get("/products");
+export async function listProducts(includeInactive) {
+  const { data } = await api.get("/products", includeInactive ? { params: { includeInactive: true } } : {});
   return data.data;
 }
 

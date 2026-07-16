@@ -41,3 +41,18 @@ export async function listExpiringOrders() {
   const { data } = await api.get("/orders/expiring");
   return data.data;
 }
+
+// Starts a real Paystack transaction for the given installment amount and
+// returns the checkout URL to redirect to. Nothing counts as paid until
+// the buyer completes checkout and it's verified.
+export async function initializePayment(orderId, amount) {
+  const { data } = await api.post("/payments/initialize", { orderId, amount });
+  return data.data; // { authorizationUrl, reference }
+}
+
+// Called after Paystack redirects back — confirms with Paystack directly
+// (never trusts the redirect alone) and returns the fresh order.
+export async function verifyPayment(reference) {
+  const { data } = await api.get(`/payments/verify/${reference}`);
+  return data.data;
+}

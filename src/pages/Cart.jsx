@@ -63,6 +63,8 @@ export default function Cart() {
           const unitPrice = resolveTierPrice(item.priceTiers, item.quantity);
           const basePrice = Number(item.priceTiers[0]?.price || 0);
           const isDiscounted = unitPrice < basePrice;
+          const lineTotal = unitPrice * item.quantity;
+          const baseLineTotal = basePrice * item.quantity;
 
           return (
             <div key={item.variantId} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
@@ -70,14 +72,15 @@ export default function Cart() {
                 <p className="font-semibold text-navy-900">
                   {item.productName} — {item.size}
                 </p>
-                <div className="flex items-center gap-2 text-sm text-navy-900/60">
+                <div className="flex items-center gap-2 text-sm">
                   {isDiscounted && (
-                    <span className="line-through text-status-danger">
-                      ₦{basePrice.toLocaleString()}
+                    <span className="line-through text-status-danger text-xs">
+                      ₦{baseLineTotal.toLocaleString()}
                     </span>
                   )}
-                  <span>₦{unitPrice.toLocaleString()} each</span>
+                  <span className="font-bold text-navy-900">₦{lineTotal.toLocaleString()}</span>
                 </div>
+                <p className="text-[11px] text-navy-900/40">₦{unitPrice.toLocaleString()} / bottle</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">

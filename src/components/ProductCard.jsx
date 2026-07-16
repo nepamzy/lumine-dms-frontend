@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getProductVariants } from "../api/products";
 import { resolveTierPrice } from "../context/CartContext";
 import { halfPackUnits, packLabelFor } from "../utils/packSizes";
+import { useAuth } from "../context/AuthContext";
 import fullcream35cl from "../assets/fullcream-35cl.png";
 import fullcream50cl from "../assets/fullcream-50cl.png";
 import fullcream1L from "../assets/fullcream-1L.png";
@@ -42,6 +43,8 @@ function flavorColor(name = "") {
 }
 
 export default function ProductCard({ product, onAdd }) {
+  const { user } = useAuth();
+  const isSalesRep = user?.role === "distributor" && user?.distributor_type === "sales_rep";
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -60,8 +63,10 @@ export default function ProductCard({ product, onAdd }) {
   const unitsPerHalfPack = halfPackUnits(selectedSize);
   const quantity = halfPackCount * unitsPerHalfPack;
   const basePrice = activeVariant ? Number(activeVariant.priceTiers[0]?.price) : 0;
-  const currentPrice = activeVariant ? resolveTierPrice(activeVariant.priceTiers, quantity) : 0;
-  const isDiscounted = currentPrice < basePrice;
+  const unitPrice = isSalesRep ? basePrice : activeVariant ? resolveTierPrice(activeVariant.priceTiers, quantity) : 0;
+  const lineTotal = unitPrice * quantity;
+  const baseLineTotal = basePrice * quantity;
+  const isDiscounted = !isSalesRep && unitPrice < basePrice;
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
@@ -159,17 +164,19 @@ export default function ProductCard({ product, onAdd }) {
           </div>
           <p className="text-[11px] text-navy-900/45 mb-3">{quantity} bottles</p>
 
-          {/* Price display */}
+          {/* Price display — always shows the TOTAL for the selected pack
+              quantity, matching exactly what Cart/Checkout will charge */}
           <div className="mt-auto flex items-center justify-between">
             <div className="flex flex-col">
               {isDiscounted && (
                 <span className="text-xs text-status-danger line-through">
-                  ₦{basePrice.toLocaleString()}
+                  ₦{baseLineTotal.toLocaleString()}
                 </span>
               )}
               <span className="font-display font-bold text-navy-800">
-                ₦{currentPrice.toLocaleString()}
+                ₦{lineTotal.toLocaleString()}
               </span>
+              <span className="text-[10px] text-navy-900/40">₦{unitPrice.toLocaleString()} / bottle</span>
             </div>
             <button
               onClick={handleAdd}

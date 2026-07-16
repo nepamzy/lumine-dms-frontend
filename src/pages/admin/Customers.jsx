@@ -15,9 +15,12 @@ export default function Customers() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([refresh(), listDistributors("approved").then(setDistributors)]).finally(() =>
-      setLoading(false)
-    );
+    Promise.all([
+      refresh(),
+      listDistributors("approved").then((rows) =>
+        setDistributors(rows.filter((d) => d.distributor_type !== "distributor"))
+      ),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const handleReassign = async (customerId, distributorId) => {

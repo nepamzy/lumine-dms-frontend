@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
-import { logPayment } from "../api/orders";
+import { initializePayment } from "../api/orders";
+
+const STATUS_LABELS = {
+  pending: "Awaiting confirmation",
+  successful: "Confirmed",
+  failed: "Failed",
+};
+const STATUS_STYLES = {
+  pending: "text-gold-700",
+  successful: "text-green-500",
+  failed: "text-status-danger",
+};
 
 // Full payment picture for one order: color-coded status, running history
-// log, and (for the buyer only) a form to log a new payment. Distributors
-// see a note about the 70%-per-payment floor; customers can pay any amount.
+// log (including in-progress/failed attempts for transparency), and — for
+// the buyer only — a form to start a real Paystack payment. Nothing here
+// ever marks itself "paid" on its own; every successful row was confirmed
+// directly with Paystack.
 export default function PaymentPanel({ order, canPay, onUpdated }) {
   const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,7 +29,7 @@ export default function PaymentPanel({ order, canPay, onUpdated }) {
   const remaining = Math.max(0, Number(order.total_amount) - order.payment.totalPaid);
   const minDistributorPayment = order.buyerKind === "distributor" ? 0.7 * Number(order.total_amount) : 0;
 
-  const handleSubmit = async (e) => {
+  const handlePay = async (e) => {
     e.preventDefault();
     setError(null);
     const value = Number(amount);
@@ -27,13 +39,10 @@ export default function PaymentPanel({ order, canPay, onUpdated }) {
     }
     setSubmitting(true);
     try {
-      await logPayment(order.id, value, note || undefined);
-      setAmount("");
-      setNote("");
-      onUpdated?.();
+      const { authorizationUrl } = await initializePayment(order.id, value);
+      window.location.href = authorizationUrl; // full redirect to Paystack's hosted checkout
     } catch (err) {
-      setError(err.response?.data?.message || "Couldn't log that payment");
-    } finally {
+      setError(err.response?.data?.message || "Couldn't start payment");
       setSubmitting(false);
     }
   };
@@ -71,7 +80,8 @@ export default function PaymentPanel({ order, canPay, onUpdated }) {
               <div key={p.id} className="flex justify-between text-xs text-navy-900/60 border-b border-navy-900/5 pb-1.5">
                 <span>
                   {new Date(p.recorded_at).toLocaleDateString()} — {p.recorded_by_name}
-                  {p.note ? ` (${p.note})` : ""}
+                  {" · "}
+                  <span className={`font-semibold ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
                 </span>
                 <span className="font-semibold text-navy-900">₦{Number(p.amount).toLocaleString()}</span>
               </div>
@@ -81,38 +91,32 @@ export default function PaymentPanel({ order, canPay, onUpdated }) {
       )}
 
       {canPay && percent < 100 && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2 pt-3 border-t border-navy-900/10">
+        <form onSubmit={handlePay} className="flex flex-col gap-2 pt-3 border-t border-navy-900/10">
           {order.buyerKind === "distributor" && percent < 70 && (
             <p className="text-xs text-navy-900/50">
               Payments must be at least 70% of the order total (₦{minDistributorPayment.toLocaleString()}) unless it's your final top-up.
             </p>
           )}
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min="1"
-              step="0.01"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="input flex-1 text-sm"
-            />
-            <input
-              type="text"
-              placeholder="Note (optional)"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="input flex-1 text-sm"
-            />
-          </div>
+          <input
+            type="number"
+            min="1"
+            step="0.01"
+            placeholder="Amount to pay"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="input text-sm"
+          />
           {error && <p className="text-status-danger text-xs">{error}</p>}
           <button
             type="submit"
             disabled={submitting}
             className="bg-gold-500 text-navy-900 font-bold text-sm py-2.5 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
           >
-            {submitting ? "Logging…" : "Log Payment"}
+            {submitting ? "Starting payment…" : "Pay with Paystack"}
           </button>
+          <p className="text-[11px] text-navy-900/40 text-center">
+            You'll be redirected to Paystack's secure checkout. Payment only counts once confirmed.
+          </p>
         </form>
       )}
     </div>

@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getOrder, confirmTransport, confirmReceived } from "../api/orders";
+import { getOrder, confirmTransport, confirmReceived, verifyPayment } from "../api/orders";
 import OrderStatusStepper from "../components/OrderStatusStepper";
 import PaymentPanel from "../components/PaymentPanel";
 
 export default function OrderDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   const refresh = () => getOrder(id).then(setOrder);
 
@@ -18,6 +20,21 @@ export default function OrderDetail() {
     setLoading(true);
     refresh().finally(() => setLoading(false));
   }, [id]);
+
+  // Coming back from Paystack's checkout — confirm with our backend, which
+  // re-checks with Paystack directly rather than trusting the redirect.
+  useEffect(() => {
+    const ref = searchParams.get("paystack_ref");
+    if (!ref) return;
+    setVerifying(true);
+    verifyPayment(ref)
+      .then((updated) => {
+        setOrder(updated);
+        setSearchParams({}, { replace: true }); // clean the URL
+      })
+      .finally(() => setVerifying(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) return <p className="max-w-2xl mx-auto px-6 py-16 text-navy-900/60">Loading…</p>;
   if (!order) return <p className="max-w-2xl mx-auto px-6 py-16 text-navy-900/60">Order not found.</p>;
@@ -60,6 +77,12 @@ export default function OrderDetail() {
       <div className="bg-white rounded-card shadow-card p-5 mb-5">
         <OrderStatusStepper stage={order.stage} buyerKind={order.buyerKind} />
       </div>
+
+      {verifying && (
+        <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-5 text-sm font-semibold">
+          Confirming your payment with Paystack…
+        </div>
+      )}
 
       {/* Admin controls */}
       {isAdmin && (

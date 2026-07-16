@@ -2,7 +2,7 @@ import { useState, lazy, Suspense } from "react";
 import Overview from "./admin/Overview";
 import Products from "./admin/Products";
 import Orders from "./admin/Orders";
-import Distributors from "./admin/Distributors";
+import DistributorTypeList from "./admin/DistributorTypeList";
 import Customers from "./admin/Customers";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
 
@@ -12,7 +12,16 @@ const TABS = [
   { key: "overview", label: "Overview", Component: Overview },
   { key: "products", label: "Products", Component: Products },
   { key: "orders", label: "Orders", Component: Orders },
-  { key: "distributors", label: "Distributors", Component: Distributors },
+  {
+    key: "distributors",
+    label: "Distributors",
+    Component: () => <DistributorTypeList distributorType="distributor" label="Distributors" />,
+  },
+  {
+    key: "salesreps",
+    label: "Sales Reps",
+    Component: () => <DistributorTypeList distributorType="sales_rep" label="Sales Reps" />,
+  },
   { key: "customers", label: "Customers", Component: Customers },
   { key: "expiring", label: "Expiring Batches", Component: ExpiringBatchesList },
   {

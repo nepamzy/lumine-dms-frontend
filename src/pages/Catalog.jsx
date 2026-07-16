@@ -30,9 +30,15 @@ export default function Catalog() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isSalesRep = user?.role === "distributor" && user?.distributor_type === "sales_rep";
+
   const handleAdd = (variant, productName, quantity) => {
     if (!user) {
       navigate("/login");
+      return;
+    }
+    if (isSalesRep && !forCustomer) {
+      navigate("/distributor");
       return;
     }
     addItem(variant, productName, quantity);
@@ -49,6 +55,16 @@ export default function Catalog() {
         <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-6 text-sm font-semibold flex items-center justify-between">
           <span>Ordering on behalf of {forCustomer.name}</span>
           <Link to="/cart" className="underline">View cart</Link>
+        </div>
+      )}
+
+      {isSalesRep && !forCustomer && (
+        <div className="bg-status-danger/10 text-status-danger rounded-md px-4 py-3 mb-6 text-sm font-semibold">
+          Pick a customer from your{" "}
+          <Link to="/distributor" className="underline">
+            dashboard's Place Order tab
+          </Link>{" "}
+          before adding items — every order needs to belong to a specific customer.
         </div>
       )}
 

@@ -63,7 +63,14 @@ export default function Profile() {
     <div className="max-w-lg mx-auto px-6 py-12">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">My Profile</h1>
       <p className="text-navy-900/60 text-sm mb-8">
-        {user.role === "distributor" ? "Distributor account" : "Customer account"} · {user.email}
+        {user.role === "admin"
+          ? "Admin account"
+          : user.role === "distributor"
+          ? user.distributor_type === "distributor"
+            ? "Distributor account"
+            : "Sales Rep account"
+          : "Customer account"}{" "}
+        · {user.email}
       </p>
 
       <form onSubmit={handleInfoSubmit} className="flex flex-col gap-4 mb-10">

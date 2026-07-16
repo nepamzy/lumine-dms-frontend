@@ -30,8 +30,11 @@ export async function assignDistributor(orderId, distributorId) {
   return data.data;
 }
 
-export async function listDistributors(status) {
-  const { data } = await api.get("/admin/distributors", { params: status ? { status } : {} });
+export async function listDistributors(status, distributorType) {
+  const params = {};
+  if (status) params.status = status;
+  if (distributorType) params.distributorType = distributorType;
+  const { data } = await api.get("/admin/distributors", { params });
   return data.data;
 }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useCart, resolveTierPrice } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../api/orders";
@@ -15,6 +15,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   const needsAcknowledgment = user?.role === "customer" && !user?.acknowledged_payment_notice;
+  const isSalesRep = user?.role === "distributor" && user?.distributor_type === "sales_rep";
 
   const handleAcknowledge = async () => {
     setAcknowledging(true);
@@ -48,6 +49,21 @@ export default function Checkout() {
   if (items.length === 0) {
     navigate("/cart");
     return null;
+  }
+
+  if (isSalesRep && !forCustomer) {
+    return (
+      <div className="max-w-lg mx-auto px-6 py-16 text-center">
+        <h1 className="font-display font-bold text-xl text-navy-900 mb-3">Pick a customer first</h1>
+        <p className="text-sm text-navy-900/60 mb-6">
+          As a sales rep, every order needs to be placed on behalf of a specific customer.
+          Go to your dashboard's Place Order tab and choose who this order is for.
+        </p>
+        <Link to="/distributor" className="bg-gold-500 text-navy-900 font-bold text-sm px-6 py-3 rounded-md">
+          Go to Dashboard
+        </Link>
+      </div>
+    );
   }
 
   if (needsAcknowledgment) {
