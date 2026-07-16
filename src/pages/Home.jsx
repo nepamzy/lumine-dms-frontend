@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
 import FAQ from "../components/FAQ";
+import AdminLoginModal from "../components/AdminLoginModal";
 import fullcream1L from "../assets/fullcream-1L.png";
 import fullcream50cl from "../assets/fullcream-50cl.png";
 import fullcream35cl from "../assets/fullcream-35cl.png";
@@ -41,6 +43,23 @@ const FLAVORS = [
 ];
 
 export default function Home() {
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const tapCount = useRef(0);
+  const lastTapTime = useRef(0);
+
+  // Hidden admin entry point — tap the Premium Quality badge 3 times
+  // within 2 seconds. Not linked or hinted at anywhere else on the site.
+  const handleBadgeTap = () => {
+    const now = Date.now();
+    if (now - lastTapTime.current > 2000) tapCount.current = 0;
+    tapCount.current += 1;
+    lastTapTime.current = now;
+    if (tapCount.current >= 3) {
+      tapCount.current = 0;
+      setShowAdminLogin(true);
+    }
+  };
+
   return (
     <div className="bg-cream-50">
       {/* Hero */}
@@ -129,7 +148,10 @@ export default function Home() {
           <p className="text-sm text-navy-900/55">Fully approved and certified for your safety</p>
         </div>
         <div>
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gold-500/15 flex items-center justify-center text-2xl">
+          <div
+            onClick={handleBadgeTap}
+            className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gold-500/15 flex items-center justify-center text-2xl cursor-default select-none"
+          >
             🏅
           </div>
           <h3 className="font-display font-bold text-navy-900 mb-1">Premium Quality</h3>
@@ -186,6 +208,8 @@ export default function Home() {
       </section>
 
       <FAQ />
+
+      {showAdminLogin && <AdminLoginModal onClose={() => setShowAdminLogin(false)} />}
     </div>
   );
 }

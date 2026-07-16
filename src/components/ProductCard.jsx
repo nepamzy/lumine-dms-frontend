@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getProductVariants } from "../api/products";
-import { resolveTierPrice } from "../context/CartContext";
+import { resolveUnitPrice } from "../context/CartContext";
 import { halfPackUnits, packLabelFor } from "../utils/packSizes";
 import { useAuth } from "../context/AuthContext";
 import fullcream35cl from "../assets/fullcream-35cl.png";
@@ -44,7 +44,7 @@ function flavorColor(name = "") {
 
 export default function ProductCard({ product, onAdd }) {
   const { user } = useAuth();
-  const isSalesRep = user?.role === "distributor" && user?.distributor_type === "sales_rep";
+  const isDistributor = user?.role === "distributor" && user?.distributor_type === "distributor";
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -62,11 +62,11 @@ export default function ProductCard({ product, onAdd }) {
   const activeVariant = variants.find((v) => v.size === selectedSize);
   const unitsPerHalfPack = halfPackUnits(selectedSize);
   const quantity = halfPackCount * unitsPerHalfPack;
-  const basePrice = activeVariant ? Number(activeVariant.priceTiers[0]?.price) : 0;
-  const unitPrice = isSalesRep ? basePrice : activeVariant ? resolveTierPrice(activeVariant.priceTiers, quantity) : 0;
+  const basePrice = activeVariant ? Number(activeVariant.packPrice) / (unitsPerHalfPack * 2) : 0;
+  const unitPrice = activeVariant ? resolveUnitPrice({ ...activeVariant, quantity }, isDistributor) : 0;
   const lineTotal = unitPrice * quantity;
   const baseLineTotal = basePrice * quantity;
-  const isDiscounted = !isSalesRep && unitPrice < basePrice;
+  const isDiscounted = isDistributor && unitPrice < basePrice;
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);

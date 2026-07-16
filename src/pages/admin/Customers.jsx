@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listCustomers, listDistributors, reassignCustomerDistributor, getCustomerHistory } from "../../api/admin";
+import { listCustomers, listDistributors, reassignCustomerDistributor, getCustomerHistory, removeCustomer } from "../../api/admin";
 import ActivityHistoryModal from "../../components/ActivityHistoryModal";
 
 export default function Customers() {
@@ -7,6 +7,7 @@ export default function Customers() {
   const [distributors, setDistributors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
   const [historyFor, setHistoryFor] = useState(null); // customer id currently open in modal
   const [historyData, setHistoryData] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -30,6 +31,17 @@ export default function Customers() {
       await refresh();
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const handleRemove = async (customerId, name) => {
+    if (!window.confirm(`Remove ${name}? They can sign up fresh again, but this account's history moves to Trash.`)) return;
+    setRemovingId(customerId);
+    try {
+      await removeCustomer(customerId);
+      await refresh();
+    } finally {
+      setRemovingId(null);
     }
   };
 
@@ -68,6 +80,9 @@ export default function Customers() {
               <div>
                 <p className="font-semibold text-navy-900">
                   {c.business_name || c.full_name}
+                  {c.prior_accounts_count > 0 && (
+                    <span className="text-navy-900/40 font-normal"> (User {Number(c.prior_accounts_count) + 1})</span>
+                  )}
                 </p>
                 <p className="text-xs text-navy-900/50">
                   {c.full_name} · {c.email} · {c.phone}
@@ -86,14 +101,13 @@ export default function Customers() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-green-500/15 text-green-500 whitespace-nowrap">
                   {c.status}
                 </span>
                 <select
                   value={c.assigned_distributor_id || ""}
                   disabled={savingId === c.id}
-                  onClick={(e) => e.stopPropagation()}
                   onChange={(e) => handleReassign(c.id, e.target.value)}
                   className="text-xs border border-navy-900/15 rounded-md px-2 py-1.5 disabled:opacity-50"
                 >
@@ -104,6 +118,13 @@ export default function Customers() {
                     </option>
                   ))}
                 </select>
+                <button
+                  disabled={removingId === c.id}
+                  onClick={() => handleRemove(c.id, c.business_name || c.full_name)}
+                  className="text-status-danger font-semibold text-xs disabled:opacity-50"
+                >
+                  Remove
+                </button>
               </div>
             </div>
           ))}

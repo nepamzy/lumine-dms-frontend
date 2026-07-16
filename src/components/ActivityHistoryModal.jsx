@@ -1,16 +1,13 @@
-const PAYMENT_STYLES = {
-  successful: "bg-green-500/15 text-green-500",
-  initiated: "bg-gold-500/20 text-gold-700",
-  failed: "bg-red-500/15 text-red-500",
-  refunded: "bg-navy-900/10 text-navy-900/60",
-};
-
-function PaymentBadge({ status }) {
-  const label = status || "no payment";
-  const style = PAYMENT_STYLES[status] || "bg-navy-900/10 text-navy-900/50";
+function PaymentBadge({ percent }) {
+  const style =
+    percent >= 100
+      ? "bg-green-500/15 text-green-500"
+      : percent >= 70
+      ? "bg-gold-500/20 text-gold-700"
+      : "bg-red-500/15 text-red-500";
   return (
     <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${style}`}>
-      {label === "successful" ? "Paid ✓" : label === "initiated" ? "Payment pending" : label === "failed" ? "Payment failed" : label}
+      {percent.toFixed(0)}% paid
     </span>
   );
 }
@@ -103,7 +100,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                         <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/60 whitespace-nowrap">
                           {o.status}
                         </span>
-                        <PaymentBadge status={o.payment_status} />
+                        <PaymentBadge percent={o.payment_percent} />
                       </div>
                     </div>
 

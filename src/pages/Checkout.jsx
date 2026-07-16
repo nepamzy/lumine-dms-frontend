@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useCart, resolveTierPrice } from "../context/CartContext";
+import { useCart, resolveUnitPrice } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../api/orders";
 import { acknowledgePaymentNotice } from "../api/auth";
 
 export default function Checkout() {
-  const { items, total, clearCart, forCustomer } = useCart();
+  const { items, total, clearCart, forCustomer, isDistributor } = useCart();
   const { user, refreshUser } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -113,7 +113,7 @@ export default function Checkout() {
       )}
       <div className="bg-white rounded-card shadow-card p-5 mb-6">
         {items.map((item) => {
-          const unitPrice = resolveTierPrice(item.priceTiers, item.quantity);
+          const unitPrice = resolveUnitPrice(item, isDistributor);
           return (
             <div key={item.variantId} className="flex justify-between text-sm py-1.5">
               <span className="text-navy-900/80">

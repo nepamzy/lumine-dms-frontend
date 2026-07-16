@@ -1,14 +1,27 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { halfPackUnits } from "../utils/packSizes";
 
 const CartContext = createContext(null);
 
-export function resolveTierPrice(priceTiers, quantity) {
-  if (!priceTiers || priceTiers.length === 0) return 0;
-  const tier = priceTiers.find(
-    (t) => quantity >= t.min_qty && (t.max_qty === null || quantity <= t.max_qty)
-  );
-  return tier ? Number(tier.price) : Number(priceTiers[0].price);
+// Pricing is per PACK. Customers and sales reps always pay the flat
+// packPrice ("Normal Price") — no discount, ever, regardless of quantity.
+// Only a true distributor buying for themselves gets the bulk pack-count
+// discount tiers. Returns the PER-BOTTLE unit price either way, matching
+// exactly how the backend computes the real order total.
+export function resolveUnitPrice(item, isDistributor) {
+  const packSize = halfPackUnits(item.size) * 2;
+  const packs = item.quantity / packSize;
+  let pricePerPack = Number(item.packPrice);
+
+  if (isDistributor && item.priceTiers?.length) {
+    const tier = item.priceTiers.find(
+      (t) => packs >= t.min_qty && (t.max_qty === null || packs <= t.max_qty)
+    );
+    if (tier) pricePerPack = Number(tier.price);
+  }
+
+  return pricePerPack / packSize;
 }
 
 function storageKey(userId) {
@@ -68,6 +81,7 @@ export function CartProvider({ children }) {
           productName,
           size: variant.size,
           priceTiers: variant.priceTiers,
+          packPrice: variant.packPrice,
           quantity,
         },
       ];
@@ -92,18 +106,16 @@ export function CartProvider({ children }) {
     localStorage.removeItem(`lumine_cart_for_${user?.id}`);
   }, [user?.id]);
 
+  const isDistributor = user?.role === "distributor" && user?.distributor_type === "distributor";
+
   const total = useMemo(
-    () =>
-      items.reduce(
-        (sum, i) => sum + resolveTierPrice(i.priceTiers, i.quantity) * i.quantity,
-        0
-      ),
-    [items]
+    () => items.reduce((sum, i) => sum + resolveUnitPrice(i, isDistributor) * i.quantity, 0),
+    [items, isDistributor]
   );
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, total, forCustomer, setForCustomer }}
+      value={{ items, addItem, removeItem, updateQuantity, clearCart, total, forCustomer, setForCustomer, isDistributor }}
     >
       {children}
     </CartContext.Provider>

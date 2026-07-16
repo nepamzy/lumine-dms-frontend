@@ -1,13 +1,13 @@
   import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useCart, resolveTierPrice } from "../context/CartContext";
+import { useCart, resolveUnitPrice } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { listMyOrders } from "../api/orders";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
 import { halfPackUnits, packLabelFor } from "../utils/packSizes";
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, total, forCustomer } = useCart();
+  const { items, updateQuantity, removeItem, total, forCustomer, isDistributor } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [worstOrder, setWorstOrder] = useState(null);
@@ -60,9 +60,9 @@ export default function Cart() {
 
       <div className="flex flex-col gap-3 mb-6">
         {items.map((item) => {
-          const unitPrice = resolveTierPrice(item.priceTiers, item.quantity);
-          const basePrice = Number(item.priceTiers[0]?.price || 0);
-          const isDiscounted = unitPrice < basePrice;
+          const unitPrice = resolveUnitPrice(item, isDistributor);
+          const basePrice = Number(item.packPrice) / (halfPackUnits(item.size) * 2);
+          const isDiscounted = isDistributor && unitPrice < basePrice;
           const lineTotal = unitPrice * item.quantity;
           const baseLineTotal = basePrice * item.quantity;
 

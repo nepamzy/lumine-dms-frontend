@@ -77,6 +77,21 @@ export async function getCustomerHistory(customerId) {
   return data.data;
 }
 
+export async function removeCustomer(customerId) {
+  const { data } = await api.delete(`/admin/customers/${customerId}`);
+  return data;
+}
+
+export async function removeDistributor(distributorId) {
+  const { data } = await api.delete(`/admin/distributors/${distributorId}`);
+  return data;
+}
+
+export async function listTrash() {
+  const { data } = await api.get("/admin/distributors/trash");
+  return data.data;
+}
+
 export async function getDistributorHistory(distributorId) {
   const { data } = await api.get(`/admin/distributors/${distributorId}/history`);
   return data.data;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listDistributors, approveDistributor, rejectDistributor, listTerritories, getDistributorHistory } from "../../api/admin";
+import { listDistributors, approveDistributor, rejectDistributor, listTerritories, getDistributorHistory, removeDistributor } from "../../api/admin";
 import ActivityHistoryModal from "../../components/ActivityHistoryModal";
 
 // Shared list UI for both the admin "Distributors" tab and "Sales Reps"
@@ -38,6 +38,12 @@ export default function DistributorTypeList({ distributorType, label }) {
     refresh();
   };
 
+  const handleRemove = async (id, name) => {
+    if (!window.confirm(`Remove ${name}? They can sign up fresh again, but this account's history moves to Trash.`)) return;
+    await removeDistributor(id);
+    refresh();
+  };
+
   const openHistory = async (id) => {
     setHistoryFor(id);
     setHistoryLoading(true);
@@ -60,7 +66,12 @@ export default function DistributorTypeList({ distributorType, label }) {
       className="bg-white rounded-card shadow-card p-4 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-shadow"
     >
       <div>
-        <p className="font-semibold text-navy-900">{d.business_name || d.full_name}</p>
+        <p className="font-semibold text-navy-900">
+          {d.business_name || d.full_name}
+          {d.prior_accounts_count > 0 && (
+            <span className="text-navy-900/40 font-normal"> (User {Number(d.prior_accounts_count) + 1})</span>
+          )}
+        </p>
         <p className="text-xs text-navy-900/50">
           {d.full_name} · {d.email} · {d.state}
           {d.local_government ? ` · ${d.local_government}` : ""}
@@ -92,6 +103,12 @@ export default function DistributorTypeList({ distributorType, label }) {
             </button>
           </>
         )}
+        <button
+          onClick={() => handleRemove(d.id, d.business_name || d.full_name)}
+          className="text-status-danger font-semibold text-xs"
+        >
+          Remove
+        </button>
       </div>
     </div>
   );
