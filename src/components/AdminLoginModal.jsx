@@ -37,7 +37,7 @@ export default function AdminLoginModal({ onClose }) {
     <div className="fixed inset-0 bg-navy-900/60 z-[100] flex items-center justify-center p-4">
       <div className="bg-white rounded-card max-w-xs w-full p-6">
         <h3 className="font-display font-bold text-lg text-navy-900 mb-4">Admin Login</h3>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3" autoComplete="off">
           <input
             required
             type="email"
@@ -46,6 +46,8 @@ export default function AdminLoginModal({ onClose }) {
             onChange={(e) => setEmail(e.target.value)}
             className="input"
             autoFocus
+            autoComplete="off"
+            name="admin-login-email"
           />
           <input
             required
@@ -54,6 +56,8 @@ export default function AdminLoginModal({ onClose }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input"
+            autoComplete="new-password"
+            name="admin-login-password"
           />
           {error && <p className="text-status-danger text-xs">{error}</p>}
           <button
