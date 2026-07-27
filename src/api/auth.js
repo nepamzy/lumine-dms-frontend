@@ -35,3 +35,8 @@ export async function acknowledgePaymentNotice() {
   const { data } = await api.post("/auth/acknowledge-payment-notice");
   return data;
 }
+
+export async function updateLocation(latitude, longitude) {
+  const { data } = await api.patch("/auth/me/location", { latitude, longitude });
+  return data.data;
+}

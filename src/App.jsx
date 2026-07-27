@@ -13,6 +13,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderDetail from "./pages/OrderDetail";
 import SiteVisitRemindersPopup from "./components/SiteVisitRemindersPopup";
+import LocationConsentGate from "./components/LocationConsentGate";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import DistributorDashboard from "./pages/DistributorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -23,6 +24,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <SiteVisitRemindersPopup />
+      <LocationConsentGate />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />

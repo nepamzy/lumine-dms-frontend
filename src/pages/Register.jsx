@@ -54,15 +54,24 @@ export default function Register() {
   // so the new customer auto-attaches to that distributor on creation.
   const referralCode = searchParams.get("ref") || null;
 
+  // Location is MANDATORY for Customer and Sales Rep sign-ups — denying or
+  // failing to grant it blocks the account from being created at all. A
+  // true Distributor is exempt, so failure there is silently tolerated.
+  const locationRequiredForKind = kind === "customer" || kind === "sales_rep";
+
   const getLocation = () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        resolve({ latitude: null, longitude: null });
+        if (locationRequiredForKind) reject(new Error("no_geolocation"));
+        else resolve({ latitude: null, longitude: null });
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => resolve({ latitude: null, longitude: null }), // permission denied or failed — don't block signup
+        () => {
+          if (locationRequiredForKind) reject(new Error("denied"));
+          else resolve({ latitude: null, longitude: null }); // distributor — never blocks signup
+        },
         { timeout: 8000 }
       );
     });
@@ -73,7 +82,16 @@ export default function Register() {
     setError(null);
     setSubmitting(true);
     try {
-      const { latitude, longitude } = await getLocation();
+      let latitude, longitude;
+      try {
+        ({ latitude, longitude } = await getLocation());
+      } catch {
+        setError(
+          "Location access is required to sign up as a Customer or Sales Rep. Please allow location access in your browser and try again."
+        );
+        setSubmitting(false);
+        return;
+      }
       const role = kind === "customer" ? "customer" : "distributor";
       const distributorType = kind === "distributor" ? "distributor" : kind === "sales_rep" ? "sales_rep" : undefined;
       const result = await register({ ...form, role, distributorType, latitude, longitude, referralCode });
@@ -174,6 +192,13 @@ export default function Register() {
         {kind !== "customer" && (
           <p className="text-xs text-navy-900/50 bg-navy-900/5 rounded-md p-3">
             {kind === "distributor" ? "Distributor" : "Sales rep"} accounts require admin approval before you can sign in.
+          </p>
+        )}
+
+        {locationRequiredForKind && (
+          <p className="text-xs text-navy-900/50 bg-navy-900/5 rounded-md p-3">
+            {kind === "customer" ? "Customer" : "Sales rep"} accounts require location access — you'll be asked to
+            allow it when you submit this form, and signup can't complete without it.
           </p>
         )}
 
