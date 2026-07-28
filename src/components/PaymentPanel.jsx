@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
 import { initializePayment } from "../api/orders";
+import { downloadPaymentReceipt, downloadOrderReceipt } from "../utils/receipt";
 
 const STATUS_LABELS = {
   pending: "Awaiting confirmation",
@@ -18,7 +19,7 @@ const STATUS_STYLES = {
 // the buyer only — a form to start a real Paystack payment. Nothing here
 // ever marks itself "paid" on its own; every successful row was confirmed
 // directly with Paystack.
-export default function PaymentPanel({ order, canPay, onUpdated }) {
+export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = false, generatedFor = "Customer copy" }) {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -51,9 +52,19 @@ export default function PaymentPanel({ order, canPay, onUpdated }) {
     <div className="bg-white rounded-card shadow-card p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-bold text-navy-900">Payment</h3>
-        <span className={`text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${styles.bg} ${styles.text}`}>
-          {percent.toFixed(0)}% paid
-        </span>
+        <div className="flex items-center gap-2">
+          {showReceipts && (
+            <button
+              onClick={() => downloadOrderReceipt(order, { generatedFor })}
+              className="text-[11px] font-semibold text-navy-800 underline"
+            >
+              Download Invoice
+            </button>
+          )}
+          <span className={`text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${styles.bg} ${styles.text}`}>
+            {percent.toFixed(0)}% paid
+          </span>
+        </div>
       </div>
 
       <div className="flex justify-between text-sm text-navy-900/70 mb-1">
@@ -77,13 +88,23 @@ export default function PaymentPanel({ order, canPay, onUpdated }) {
           <p className="text-xs font-semibold text-navy-900/60 mb-2">Payment history</p>
           <div className="flex flex-col gap-2">
             {order.payment.payments.map((p) => (
-              <div key={p.id} className="flex justify-between text-xs text-navy-900/60 border-b border-navy-900/5 pb-1.5">
+              <div key={p.id} className="flex justify-between items-center text-xs text-navy-900/60 border-b border-navy-900/5 pb-1.5">
                 <span>
                   {new Date(p.recorded_at).toLocaleDateString()} — {p.recorded_by_name}
                   {" · "}
                   <span className={`font-semibold ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
                 </span>
-                <span className="font-semibold text-navy-900">₦{Number(p.amount).toLocaleString()}</span>
+                <span className="flex items-center gap-2">
+                  <span className="font-semibold text-navy-900">₦{Number(p.amount).toLocaleString()}</span>
+                  {showReceipts && p.status === "successful" && (
+                    <button
+                      onClick={() => downloadPaymentReceipt(order, p, { generatedFor })}
+                      className="text-[10px] font-semibold text-navy-800 underline"
+                    >
+                      Receipt
+                    </button>
+                  )}
+                </span>
               </div>
             ))}
           </div>

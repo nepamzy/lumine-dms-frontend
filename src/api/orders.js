@@ -20,6 +20,14 @@ export async function cancelOrder(id) {
   return data.data;
 }
 
+// Replaces the items on an existing pre-production order (same shape as
+// createOrder's items array). Only works while the order hasn't yet
+// entered production — the backend enforces this regardless.
+export async function editOrderItems(id, items) {
+  const { data } = await api.patch(`/orders/${id}/items`, { items });
+  return data.data;
+}
+
 export async function logPayment(orderId, amount, note) {
   const { data } = await api.post(`/orders/${orderId}/payments`, { amount, note });
   return data.data;

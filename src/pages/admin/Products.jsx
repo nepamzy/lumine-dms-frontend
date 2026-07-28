@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { listProducts } from "../../api/products";
-import { createProduct, addBatch, updateProduct } from "../../api/admin";
+import { listProducts, getProduct } from "../../api/products";
+import { createProduct, addBatch, updateProduct, deleteProduct, updateBatchQuantity, deleteBatch } from "../../api/admin";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [batchTarget, setBatchTarget] = useState(null);
+  const [manageTarget, setManageTarget] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const refresh = () => listProducts(true).then(setProducts);
 
@@ -23,6 +25,19 @@ export default function Products() {
       await refresh();
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const removeProduct = async (product) => {
+    if (!window.confirm(`Permanently remove "${product.name}" from the catalog? Past orders that included it are unaffected, but it will disappear everywhere else.`)) {
+      return;
+    }
+    setDeletingId(product.id);
+    try {
+      await deleteProduct(product.id);
+      await refresh();
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -79,11 +94,24 @@ export default function Products() {
                       + Add Batch
                     </button>
                     <button
+                      onClick={() => setManageTarget(p)}
+                      className="text-navy-800 font-semibold text-xs underline mr-3"
+                    >
+                      Manage Batches
+                    </button>
+                    <button
                       disabled={togglingId === p.id}
                       onClick={() => toggleActive(p)}
-                      className="text-status-danger font-semibold text-xs underline disabled:opacity-50"
+                      className="text-status-danger font-semibold text-xs underline disabled:opacity-50 mr-3"
                     >
                       {p.is_active ? "Mark Out of Stock" : "Reactivate"}
+                    </button>
+                    <button
+                      disabled={deletingId === p.id}
+                      onClick={() => removeProduct(p)}
+                      className="text-status-danger font-semibold text-xs underline disabled:opacity-50"
+                    >
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -101,6 +129,9 @@ export default function Products() {
       )}
       {batchTarget && (
         <AddBatchModal product={batchTarget} onClose={() => setBatchTarget(null)} onSaved={refresh} />
+      )}
+      {manageTarget && (
+        <ManageBatchesModal product={manageTarget} onClose={() => setManageTarget(null)} onSaved={refresh} />
       )}
     </div>
   );
@@ -189,6 +220,105 @@ function EditProductModal({ product, onClose, onSaved }) {
           {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>
+    </Modal>
+  );
+}
+
+function ManageBatchesModal({ product, onClose, onSaved }) {
+  const [batches, setBatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [drafts, setDrafts] = useState({}); // batchId -> input value while editing
+  const [savingId, setSavingId] = useState(null);
+  const [error, setError] = useState(null);
+
+  const load = () =>
+    getProduct(product.id).then((data) => {
+      setBatches(data.batches || []);
+      const nextDrafts = {};
+      (data.batches || []).forEach((b) => {
+        nextDrafts[b.id] = b.quantity_on_hand;
+      });
+      setDrafts(nextDrafts);
+    });
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, []);
+
+  const saveQuantity = async (batchId) => {
+    setError(null);
+    setSavingId(batchId);
+    try {
+      await updateBatchQuantity(product.id, batchId, Number(drafts[batchId]));
+      await load();
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't update quantity.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const removeBatch = async (batchId) => {
+    if (!window.confirm("Delete this out-of-stock batch? This can't be undone.")) return;
+    setError(null);
+    setSavingId(batchId);
+    try {
+      await deleteBatch(product.id, batchId);
+      await load();
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't delete batch.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <Modal title={`Batches — ${product.name}`} onClose={onClose}>
+      {loading ? (
+        <p className="text-xs text-navy-900/50">Loading…</p>
+      ) : batches.length === 0 ? (
+        <p className="text-xs text-navy-900/50">No batches yet — use "Add Batch" first.</p>
+      ) : (
+        <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
+          {batches.map((b) => (
+            <div key={b.id} className="border border-navy-900/10 rounded-md p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-navy-900">{b.batch_number}</span>
+                <span className="text-[10px] text-navy-900/40">
+                  Expires {new Date(b.expiry_date).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  className="input flex-1"
+                  value={drafts[b.id] ?? ""}
+                  onChange={(e) => setDrafts({ ...drafts, [b.id]: e.target.value })}
+                />
+                <button
+                  disabled={savingId === b.id}
+                  onClick={() => saveQuantity(b.id)}
+                  className="bg-navy-800 text-cream-50 text-xs font-bold px-3 py-2 rounded-md disabled:opacity-50"
+                >
+                  Save
+                </button>
+                <button
+                  disabled={savingId === b.id || Number(b.quantity_on_hand) > 0}
+                  onClick={() => removeBatch(b.id)}
+                  title={Number(b.quantity_on_hand) > 0 ? "Set quantity to 0 first" : "Delete batch"}
+                  className="text-status-danger font-semibold text-xs underline disabled:opacity-30"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {error && <p className="text-status-danger text-xs mt-3">{error}</p>}
     </Modal>
   );
 }

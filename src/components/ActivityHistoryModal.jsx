@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function PaymentBadge({ percent }) {
   const style =
     percent >= 100
@@ -120,6 +122,14 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                         ₦{Number(o.total_amount).toLocaleString()}
                       </span>
                     </div>
+                    <Link
+                      to={`/orders/${o.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-semibold text-navy-800 underline mt-2 inline-block"
+                    >
+                      View order — download receipt/invoice
+                    </Link>
                   </div>
                 ))}
               </div>

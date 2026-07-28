@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getOrder, confirmTransport, confirmReceived, verifyPayment } from "../api/orders";
+import { getOrder, confirmTransport, confirmReceived, verifyPayment, cancelOrder, editOrderItems } from "../api/orders";
+import { deleteOrder } from "../api/admin";
+import { halfPackUnits, packLabelFor } from "../utils/packSizes";
 import OrderStatusStepper from "../components/OrderStatusStepper";
 import PaymentPanel from "../components/PaymentPanel";
 
 export default function OrderDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftItems, setDraftItems] = useState([]); // [{ variantId, size, productName, quantity }]
+  const [editError, setEditError] = useState(null);
 
   const refresh = () => getOrder(id).then(setOrder);
 
@@ -41,8 +47,80 @@ export default function OrderDetail() {
 
   const isAdmin = user?.role === "admin";
   const isBuyer = order.customer_id === user?.id;
+  const isPlacer = order.placed_by_user_id === user?.id;
   const isAssignedStaff =
     order.buyerKind === "customer" && user?.role === "distributor" && order.distributor_id === user?.distributor_id;
+
+  // Cancel + edit share the same cutoff: only while still pending/paid AND
+  // before the order has entered production (48hrs after it was placed).
+  const canModify =
+    ["pending", "paid"].includes(order.status) && !order.stage.production && (isBuyer || isPlacer || isAdmin);
+
+  const startEdit = () => {
+    const grouped = {};
+    for (const item of order.items) {
+      const key = item.variant_id;
+      if (!grouped[key]) {
+        grouped[key] = {
+          variantId: item.variant_id,
+          size: item.variant_size,
+          productName: item.product_name,
+          quantity: 0,
+        };
+      }
+      grouped[key].quantity += item.quantity;
+    }
+    setDraftItems(Object.values(grouped));
+    setEditError(null);
+    setEditing(true);
+  };
+
+  const adjustDraftQty = (variantId, delta) => {
+    setDraftItems((prev) =>
+      prev.map((it) => {
+        if (it.variantId !== variantId) return it;
+        const step = halfPackUnits(it.size);
+        return { ...it, quantity: Math.max(0, it.quantity + delta * step) };
+      })
+    );
+  };
+
+  const saveEdit = async () => {
+    setEditError(null);
+    const items = draftItems
+      .filter((it) => it.quantity > 0)
+      .map((it) => ({ variantId: it.variantId, quantity: it.quantity }));
+    if (items.length === 0) {
+      setEditError("An order needs at least one item — cancel the order instead if you want it removed entirely.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await editOrderItems(order.id, items);
+      await refresh();
+      setEditing(false);
+    } catch (err) {
+      setEditError(err.response?.data?.message || "Couldn't save changes.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!window.confirm("Cancel this order? This can't be undone.")) return;
+    await runAction(() => cancelOrder(order.id));
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!window.confirm(`Permanently remove order ${order.order_number}? This can't be undone.`)) return;
+    setBusy(true);
+    try {
+      await deleteOrder(order.id);
+      navigate(ordersBackPath);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const runAction = async (fn) => {
     setBusy(true);
@@ -123,6 +201,13 @@ export default function OrderDetail() {
               Confirm Received (on behalf of {order.buyerKind === "distributor" ? "Distributor" : "Customer"})
             </button>
           )}
+          <button
+            disabled={busy}
+            onClick={handleDeleteOrder}
+            className="bg-status-danger text-cream-50 text-xs font-bold px-3 py-2 rounded-md disabled:opacity-50 ml-auto"
+          >
+            Delete Order
+          </button>
         </div>
       )}
 
@@ -152,22 +237,101 @@ export default function OrderDetail() {
         </div>
       )}
 
-      <PaymentPanel order={order} canPay={isBuyer} onUpdated={refresh} />
+      <PaymentPanel
+        order={order}
+        canPay={isBuyer}
+        onUpdated={refresh}
+        showReceipts={isBuyer || isAdmin || isAssignedStaff}
+        generatedFor={isAdmin ? "Admin copy" : isAssignedStaff ? "Sales rep copy" : "Customer copy"}
+      />
+
+      {canModify && !editing && (
+        <div className="flex gap-2 mt-5">
+          <button
+            disabled={busy}
+            onClick={startEdit}
+            className="bg-navy-800 text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+          >
+            Edit Order
+          </button>
+          <button
+            disabled={busy}
+            onClick={handleCancelOrder}
+            className="bg-status-danger text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+          >
+            Cancel Order
+          </button>
+        </div>
+      )}
+      {!canModify && !isAdmin && ["pending", "paid"].includes(order.status) && order.stage.production && (
+        <p className="text-xs text-navy-900/40 mt-5">
+          This order has entered production and can no longer be edited or cancelled.
+        </p>
+      )}
 
       <div className="bg-white rounded-card shadow-card p-5 mt-5">
         <h3 className="font-display font-bold text-navy-900 mb-3">Items</h3>
-        <div className="flex flex-col gap-2">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm">
-              <span className="text-navy-900/70">
-                {item.product_name} — {item.variant_size} × {item.quantity}
-              </span>
-              <span className="font-semibold text-navy-900">
-                ₦{Number(item.line_total).toLocaleString()}
-              </span>
+
+        {!editing ? (
+          <div className="flex flex-col gap-2">
+            {order.items.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-navy-900/70">
+                  {item.product_name} — {item.variant_size} × {item.quantity}
+                </span>
+                <span className="font-semibold text-navy-900">
+                  ₦{Number(item.line_total).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {draftItems.map((it) => (
+              <div key={it.variantId} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-navy-900/70">
+                  {it.productName} — {it.size}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => adjustDraftQty(it.variantId, -1)}
+                    className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
+                  >
+                    −
+                  </button>
+                  <span className="text-sm font-semibold text-navy-900 w-28 text-center">
+                    {it.quantity > 0 ? packLabelFor(it.quantity, it.size) : "Removed"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => adjustDraftQty(it.variantId, 1)}
+                    className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+            {editError && <p className="text-status-danger text-xs">{editError}</p>}
+            <div className="flex gap-2 mt-2">
+              <button
+                disabled={busy}
+                onClick={saveEdit}
+                className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+              >
+                Save Changes
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => setEditing(false)}
+                className="text-xs text-navy-900/50 underline"
+              >
+                Discard
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

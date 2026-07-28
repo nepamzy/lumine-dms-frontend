@@ -10,8 +10,23 @@ export async function updateProduct(id, payload) {
   return data.data;
 }
 
+export async function deleteProduct(productId) {
+  const { data } = await api.delete(`/products/${productId}`);
+  return data.data;
+}
+
 export async function addBatch(productId, payload) {
   const { data } = await api.post(`/products/${productId}/batches`, payload);
+  return data.data;
+}
+
+export async function updateBatchQuantity(productId, batchId, quantity) {
+  const { data } = await api.patch(`/products/${productId}/batches/${batchId}`, { quantity });
+  return data.data;
+}
+
+export async function deleteBatch(productId, batchId) {
+  const { data } = await api.delete(`/products/${productId}/batches/${batchId}`);
   return data.data;
 }
 
@@ -23,6 +38,11 @@ export async function listAllOrders(status) {
 export async function updateOrderStatus(orderId, status) {
   const { data } = await api.patch(`/orders/${orderId}/status`, { status });
   return data.data;
+}
+
+export async function deleteOrder(orderId) {
+  const { data } = await api.delete(`/orders/${orderId}`);
+  return data;
 }
 
 export async function assignDistributor(orderId, distributorId) {
