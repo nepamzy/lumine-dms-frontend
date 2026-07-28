@@ -169,8 +169,8 @@ export default function Register() {
 
         {kind === "customer" ? (
           <>
-           <Field label="Business name (optional)">
-            <input value={form.businessName} onChange={update("businessName")} className="input" />
+           <Field label="Business name">
+            <input required value={form.businessName} onChange={update("businessName")} className="input" />
           </Field>
             <Field label="Customer type">
               <select value={form.customerType} onChange={update("customerType")} className="input">
@@ -183,6 +183,10 @@ export default function Register() {
               <textarea required value={form.deliveryAddress} onChange={update("deliveryAddress")} className="input" rows={2} />
             </Field>
           </>
+        ) : kind === "sales_rep" ? (
+          <Field label="Business name (optional)">
+            <input value={form.businessName} onChange={update("businessName")} className="input" />
+          </Field>
         ) : (
           <Field label="Business name">
             <input required value={form.businessName} onChange={update("businessName")} className="input" />
