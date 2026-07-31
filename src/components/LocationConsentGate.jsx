@@ -2,18 +2,19 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { updateLocation } from "../api/auth";
 
-// Full-screen, non-dismissible gate for accounts that haven't granted
-// location yet — either they signed up before this was required, or
-// something went wrong capturing it at signup. Only Customers and Sales
-// Reps are ever gated this way (true Distributors are exempt); the
-// `needsLocationConsent` flag from /auth/me controls it, so this renders
-// nothing for anyone else.
+// Full-screen, non-dismissible gate that re-asks Customers and Sales Reps
+// for location on every fresh page load — deliberately NOT remembered
+// across refreshes. `grantedThisLoad` is plain component state, so a
+// browser refresh remounts the whole app and resets it to false again,
+// forcing the prompt every time. True Distributors are exempt.
 export default function LocationConsentGate() {
   const { user, refreshUser } = useAuth();
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState(null);
+  const [grantedThisLoad, setGrantedThisLoad] = useState(false);
 
-  if (!user || !user.needsLocationConsent) return null;
+  const isGatedRole = user && (user.role === "customer" || user.distributor_type === "sales_rep");
+  if (!isGatedRole || grantedThisLoad) return null;
 
   const roleLabel = user.role === "customer" ? "Customer" : "Sales Rep";
 
@@ -30,6 +31,7 @@ export default function LocationConsentGate() {
         try {
           await updateLocation(pos.coords.latitude, pos.coords.longitude);
           await refreshUser();
+          setGrantedThisLoad(true); // holds until the next actual page refresh
         } catch {
           setError("Couldn't save your location. Please try again.");
         } finally {
