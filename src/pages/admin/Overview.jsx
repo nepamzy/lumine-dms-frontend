@@ -22,7 +22,10 @@ export default function Overview() {
         setSales(s);
         setInventory(i);
       })
-      .catch(() => setError("Couldn't load dashboard data."))
+      .catch((err) => {
+        console.error("Overview failed to load:", err);
+        setError(err.response?.data?.message || err.message || "Couldn't load dashboard data.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -53,17 +56,17 @@ export default function Overview() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           label="Sales Rep Orders"
-          value={sales.salesRepSelfOrders.order_count}
+          value={sales.salesRepSelfOrders?.order_count ?? 0}
         />
         <StatCard
           label="Sales Rep Revenue"
-          value={`₦${Number(sales.salesRepSelfOrders.revenue).toLocaleString()}`}
+          value={`₦${Number(sales.salesRepSelfOrders?.revenue ?? 0).toLocaleString()}`}
           accent="text-green-500"
         />
         <StatCard
           label="Awaiting Payment (65% rule)"
-          value={sales.pendingPaymentReminders}
-          accent={sales.pendingPaymentReminders > 0 ? "text-status-warning" : "text-navy-900"}
+          value={sales.pendingPaymentReminders ?? 0}
+          accent={(sales.pendingPaymentReminders ?? 0) > 0 ? "text-status-warning" : "text-navy-900"}
         />
       </div>
 
