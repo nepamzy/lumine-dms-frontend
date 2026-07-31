@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
-import { initializePayment } from "../api/orders";
+import { initializePayment, logPayment } from "../api/orders";
 import { downloadPaymentReceipt, downloadOrderReceipt } from "../utils/receipt";
 
 const STATUS_LABELS = {
@@ -19,10 +19,16 @@ const STATUS_STYLES = {
 // the buyer only — a form to start a real Paystack payment. Nothing here
 // ever marks itself "paid" on its own; every successful row was confirmed
 // directly with Paystack.
-export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = false, generatedFor = "Customer copy" }) {
+export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = false, generatedFor = "Customer copy", isAdmin = false }) {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  const [manualMode, setManualMode] = useState("amount"); // "amount" | "percent"
+  const [manualValue, setManualValue] = useState("");
+  const [manualNote, setManualNote] = useState("");
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [manualError, setManualError] = useState(null);
 
   const percent = order.payment.percent;
   const band = getPaymentBand(percent);
@@ -45,6 +51,32 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
     } catch (err) {
       setError(err.response?.data?.message || "Couldn't start payment");
       setSubmitting(false);
+    }
+  };
+
+  const handleManualLog = async (e) => {
+    e.preventDefault();
+    setManualError(null);
+    const value = Number(manualValue);
+    if (!value || value <= 0) {
+      setManualError(`Enter a valid ${manualMode === "percent" ? "percentage" : "amount"}`);
+      return;
+    }
+    setManualSubmitting(true);
+    try {
+      await logPayment(
+        order.id,
+        manualMode === "amount" ? value : undefined,
+        manualNote || undefined,
+        manualMode === "percent" ? value : undefined
+      );
+      setManualValue("");
+      setManualNote("");
+      await onUpdated?.();
+    } catch (err) {
+      setManualError(err.response?.data?.message || "Couldn't authorize this payment");
+    } finally {
+      setManualSubmitting(false);
     }
   };
 
@@ -109,6 +141,48 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
             ))}
           </div>
         </div>
+      )}
+
+      {isAdmin && percent < 100 && (
+        <form onSubmit={handleManualLog} className="flex flex-col gap-2 pt-3 border-t border-navy-900/10 mt-3">
+          <p className="text-xs font-semibold text-navy-900/60">
+            Admin: authorize payment directly (bypasses Paystack — marks it successful immediately)
+          </p>
+          <div className="flex gap-2">
+            <select
+              value={manualMode}
+              onChange={(e) => setManualMode(e.target.value)}
+              className="input text-sm w-32"
+            >
+              <option value="amount">Amount (₦)</option>
+              <option value="percent">Percent (%)</option>
+            </select>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder={manualMode === "percent" ? "e.g. 40" : "e.g. 15000"}
+              value={manualValue}
+              onChange={(e) => setManualValue(e.target.value)}
+              className="input text-sm flex-1"
+            />
+          </div>
+          <input
+            type="text"
+            placeholder="Note (optional)"
+            value={manualNote}
+            onChange={(e) => setManualNote(e.target.value)}
+            className="input text-sm"
+          />
+          {manualError && <p className="text-status-danger text-xs">{manualError}</p>}
+          <button
+            type="submit"
+            disabled={manualSubmitting}
+            className="bg-navy-800 text-cream-50 font-bold text-sm py-2.5 rounded-md disabled:opacity-50"
+          >
+            {manualSubmitting ? "Authorizing…" : "Authorize Payment"}
+          </button>
+        </form>
       )}
 
       {canPay && percent < 100 && (

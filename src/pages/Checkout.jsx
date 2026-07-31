@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCart, resolveUnitPrice } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../api/orders";
@@ -12,10 +12,12 @@ export default function Checkout() {
   const [error, setError] = useState(null);
   const [ackChecked, setAckChecked] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
+  const [showDeliveryNotice, setShowDeliveryNotice] = useState(false);
   const navigate = useNavigate();
 
   const needsAcknowledgment = user?.role === "customer" && !user?.acknowledged_payment_notice;
   const isSalesRep = user?.role === "distributor" && user?.distributor_type === "sales_rep";
+  const isSalesRepSelfOrder = isSalesRep && !forCustomer;
 
   const handleAcknowledge = async () => {
     setAcknowledging(true);
@@ -49,21 +51,6 @@ export default function Checkout() {
   if (items.length === 0) {
     navigate("/cart");
     return null;
-  }
-
-  if (isSalesRep && !forCustomer) {
-    return (
-      <div className="max-w-lg mx-auto px-6 py-16 text-center">
-        <h1 className="font-display font-bold text-xl text-navy-900 mb-3">Pick a customer first</h1>
-        <p className="text-sm text-navy-900/60 mb-6">
-          As a sales rep, every order needs to be placed on behalf of a specific customer.
-          Go to your dashboard's Place Order tab and choose who this order is for.
-        </p>
-        <Link to="/distributor" className="bg-gold-500 text-navy-900 font-bold text-sm px-6 py-3 rounded-md">
-          Go to Dashboard
-        </Link>
-      </div>
-    );
   }
 
   if (needsAcknowledgment) {
@@ -111,6 +98,12 @@ export default function Checkout() {
           Placing this order on behalf of {forCustomer.name}. They'll handle payment from their own order page.
         </div>
       )}
+      {isSalesRepSelfOrder && (
+        <div className="bg-navy-900/5 text-navy-900/70 rounded-md px-4 py-3 mb-6 text-sm">
+          This is your own personal order (not on behalf of a customer). Sales rep orders must be paid{" "}
+          <span className="font-semibold">100% upfront</span> — no partial or installment payments.
+        </div>
+      )}
       <div className="bg-white rounded-card shadow-card p-5 mb-6">
         {items.map((item) => {
           const unitPrice = resolveUnitPrice(item, isDistributor);
@@ -132,12 +125,43 @@ export default function Checkout() {
       </div>
       {error && <p className="text-status-danger text-sm mb-4">{error}</p>}
       <button
-        onClick={handlePlaceOrder}
+        onClick={() => setShowDeliveryNotice(true)}
         disabled={submitting}
         className="w-full bg-gold-500 text-navy-900 font-bold py-3.5 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
       >
         {submitting ? "Placing order…" : "Place Order"}
       </button>
+
+      {showDeliveryNotice && (
+        <div className="fixed inset-0 bg-navy-900/70 z-[100] flex items-center justify-center p-6">
+          <div className="bg-white rounded-card max-w-sm w-full p-6 text-center">
+            <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Before you confirm</h2>
+            <p className="text-sm text-navy-900/60 mb-6">
+              You'll receive your product within <span className="font-semibold text-navy-900">5 working days</span> of
+              placing this order.
+              {!isSalesRepSelfOrder && !forCustomer && (
+                <> If under 65% is paid by the time it arrives, you'll have 2 weeks to complete payment.</>
+              )}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeliveryNotice(false)}
+                disabled={submitting}
+                className="flex-1 border border-navy-900/15 text-navy-900 font-semibold text-sm py-2.5 rounded-md disabled:opacity-50"
+              >
+                Go back
+              </button>
+              <button
+                onClick={handlePlaceOrder}
+                disabled={submitting}
+                className="flex-1 bg-gold-500 text-navy-900 font-bold text-sm py-2.5 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
+              >
+                {submitting ? "Placing…" : "Confirm & Place Order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

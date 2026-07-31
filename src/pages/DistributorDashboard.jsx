@@ -3,9 +3,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMyRoute, markDelivered, markFailed, updateGps } from "../api/deliveries";
 import { listMyOrders } from "../api/orders";
-import { getMyReferral, listMyCustomers } from "../api/distributor";
+import { getMyReferral, listMyCustomers, registerCustomerForRep } from "../api/distributor";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
+import STATE_LGAS from "../data/nigeria-states-lgas.json";
+
+const NIGERIAN_STATES = Object.keys(STATE_LGAS);
+const CUSTOMER_TYPES = [
+  { value: "supermarket", label: "Supermarket" },
+  { value: "retailer", label: "Retailer" },
+  { value: "pharmacy", label: "Pharmacy" },
+  { value: "hotel", label: "Hotel" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "wholesaler", label: "Wholesaler" },
+  { value: "other", label: "Other" },
+];
 
 const STATUS_COLORS = {
   assigned: "bg-gold-500/20 text-gold-700",
@@ -242,6 +254,92 @@ function DistributorSimpleDashboard({ user }) {
   );
 }
 
+// For customers without an Android phone / who can't self-register — the
+// sales rep fills out the exact same fields on their behalf. Auto-assigned
+// straight to this rep, no location required (the rep may not be able to
+// capture the customer's actual location).
+function RegisterCustomerForRep({ onRegistered }) {
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    state: "Lagos",
+    localGovernment: STATE_LGAS["Lagos"][0],
+    businessName: "",
+    customerType: "retailer",
+    deliveryAddress: "",
+  });
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const updateState = (e) => {
+    const newState = e.target.value;
+    setForm((f) => ({ ...f, state: newState, localGovernment: STATE_LGAS[newState]?.[0] || "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setSubmitting(true);
+    try {
+      await registerCustomerForRep(form);
+      setSuccess(`${form.fullName} has been registered and assigned to you.`);
+      setForm((f) => ({ ...f, fullName: "", email: "", phone: "", password: "", businessName: "", deliveryAddress: "" }));
+      onRegistered?.();
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't register this customer.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-card shadow-card p-6 flex flex-col gap-4 max-w-lg">
+      <p className="text-sm text-navy-900/60">
+        For customers who don't have an Android phone (or can't sign up themselves) — fill this
+        out the same way they would, and they'll be assigned straight to you.
+      </p>
+      <input required placeholder="Full name" value={form.fullName} onChange={update("fullName")} className="input" />
+      <input required type="email" placeholder="Email" value={form.email} onChange={update("email")} className="input" />
+      <input required placeholder="Phone" value={form.phone} onChange={update("phone")} className="input" />
+      <input required type="password" placeholder="Password" value={form.password} onChange={update("password")} className="input" />
+      <input required placeholder="Business name" value={form.businessName} onChange={update("businessName")} className="input" />
+      <select value={form.customerType} onChange={update("customerType")} className="input">
+        {CUSTOMER_TYPES.map((c) => (
+          <option key={c.value} value={c.value}>{c.label}</option>
+        ))}
+      </select>
+      <div className="flex gap-2">
+        <select value={form.state} onChange={updateState} className="input flex-1">
+          {NIGERIAN_STATES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select value={form.localGovernment} onChange={update("localGovernment")} className="input flex-1">
+          {(STATE_LGAS[form.state] || []).map((lga) => (
+            <option key={lga} value={lga}>{lga}</option>
+          ))}
+        </select>
+      </div>
+      <textarea required placeholder="Delivery address" value={form.deliveryAddress} onChange={update("deliveryAddress")} className="input" rows={2} />
+      {error && <p className="text-status-danger text-sm">{error}</p>}
+      {success && <p className="text-status-success text-sm">{success}</p>}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="bg-gold-500 text-navy-900 font-bold py-3 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
+      >
+        {submitting ? "Registering…" : "Register Customer"}
+      </button>
+    </form>
+  );
+}
+
 function SalesRepDashboard({ user, roleLabel }) {
   const [tab, setTab] = useState("route");
   const [route, setRoute] = useState([]);
@@ -282,7 +380,7 @@ function SalesRepDashboard({ user, roleLabel }) {
       <p className="text-navy-900/60 text-sm mb-6">{roleLabel} dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
-        {["route", "orders", "referral", "place-order", "expiring"].map((t) => (
+        {["route", "orders", "referral", "place-order", "register-customer", "expiring"].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -300,6 +398,8 @@ function SalesRepDashboard({ user, roleLabel }) {
               ? "Referral"
               : t === "place-order"
               ? "Place Order"
+              : t === "register-customer"
+              ? "Register Customer"
               : "Expiring Batches"}
           </button>
         ))}
@@ -396,6 +496,8 @@ function SalesRepDashboard({ user, roleLabel }) {
             ))
           )}
         </div>
+      ) : tab === "register-customer" ? (
+        <RegisterCustomerForRep onRegistered={refreshCustomers} />
       ) : tab === "expiring" ? (
         <ExpiringBatchesList />
       ) : (

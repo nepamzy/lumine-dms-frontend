@@ -237,12 +237,24 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {order.paymentDue && (
+        <div
+          className={`rounded-md px-4 py-3 mb-5 text-sm font-semibold ${
+            order.paymentDue.overdue ? "bg-status-danger/10 text-status-danger" : "bg-gold-500/15 text-gold-700"
+          }`}
+        >
+          {order.paymentDue.overdue
+            ? `Payment is overdue — please complete the remaining balance as soon as possible.`
+            : `${order.paymentDue.daysRemaining} day${order.paymentDue.daysRemaining === 1 ? "" : "s"} left to complete your payment (in up to two installments).`}
+        </div>
+      )}
       <PaymentPanel
         order={order}
         canPay={isBuyer}
         onUpdated={refresh}
         showReceipts={isBuyer || isAdmin || isAssignedStaff}
         generatedFor={isAdmin ? "Admin copy" : isAssignedStaff ? "Sales rep copy" : "Customer copy"}
+        isAdmin={isAdmin}
       />
 
       {canModify && !editing && (

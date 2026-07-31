@@ -37,10 +37,6 @@ export default function Catalog() {
       navigate("/login");
       return;
     }
-    if (isSalesRep && !forCustomer) {
-      navigate("/distributor");
-      return;
-    }
     addItem(variant, productName, quantity);
   };
 
@@ -59,12 +55,11 @@ export default function Catalog() {
       )}
 
       {isSalesRep && !forCustomer && (
-        <div className="bg-status-danger/10 text-status-danger rounded-md px-4 py-3 mb-6 text-sm font-semibold">
-          Pick a customer from your{" "}
-          <Link to="/distributor" className="underline">
+        <div className="bg-navy-900/5 text-navy-900/70 rounded-md px-4 py-3 mb-6 text-sm">
+          Browsing for your own order. To order on behalf of a customer instead, pick one from your{" "}
+          <Link to="/distributor" className="underline font-semibold">
             dashboard's Place Order tab
-          </Link>{" "}
-          before adding items — every order needs to belong to a specific customer.
+          </Link>.
         </div>
       )}
 

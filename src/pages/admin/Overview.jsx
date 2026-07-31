@@ -31,7 +31,7 @@ export default function Overview() {
 
   return (
     <div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <StatCard label="Total Orders" value={sales.summary.order_count} />
         <StatCard
           label="Revenue"
@@ -47,6 +47,23 @@ export default function Overview() {
           label="Low Stock SKUs"
           value={inventory.lowStock.length}
           accent={inventory.lowStock.length > 0 ? "text-status-danger" : "text-navy-900"}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="Sales Rep Orders"
+          value={sales.salesRepSelfOrders.order_count}
+        />
+        <StatCard
+          label="Sales Rep Revenue"
+          value={`₦${Number(sales.salesRepSelfOrders.revenue).toLocaleString()}`}
+          accent="text-green-500"
+        />
+        <StatCard
+          label="Awaiting Payment (65% rule)"
+          value={sales.pendingPaymentReminders}
+          accent={sales.pendingPaymentReminders > 0 ? "text-status-warning" : "text-navy-900"}
         />
       </div>
 

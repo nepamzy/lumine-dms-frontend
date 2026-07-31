@@ -28,8 +28,8 @@ export async function editOrderItems(id, items) {
   return data.data;
 }
 
-export async function logPayment(orderId, amount, note) {
-  const { data } = await api.post(`/orders/${orderId}/payments`, { amount, note });
+export async function logPayment(orderId, amount, note, percentOfTotal) {
+  const { data } = await api.post(`/orders/${orderId}/payments`, { amount, note, percentOfTotal });
   return data.data;
 }
 

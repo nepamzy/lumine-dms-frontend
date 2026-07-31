@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { listCustomers, getCustomerHistory } from "../api/admin";
 
 function PaymentBadge({ percent }) {
   const style =
@@ -29,6 +31,34 @@ function StatCard({ label, value }) {
 // the shape of `data` ({ profile, orders, summary }) is otherwise the same.
 export default function ActivityHistoryModal({ type, data, loading, onClose }) {
   const isDistributor = type === "distributor";
+  const isSalesRep = isDistributor && data?.profile?.distributor_type === "sales_rep";
+  const [tab, setTab] = useState("orders"); // "orders" | "customers" — sales reps/distributors only
+  const [customers, setCustomers] = useState(null);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [nestedCustomer, setNestedCustomer] = useState(null); // { id }
+  const [nestedData, setNestedData] = useState(null);
+  const [nestedLoading, setNestedLoading] = useState(false);
+
+  const openCustomersTab = async () => {
+    setTab("customers");
+    if (customers !== null) return; // already loaded
+    setCustomersLoading(true);
+    try {
+      setCustomers(await listCustomers(data.profile.id));
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const openNestedCustomer = async (customerId) => {
+    setNestedCustomer({ id: customerId });
+    setNestedLoading(true);
+    try {
+      setNestedData(await getCustomerHistory(customerId));
+    } finally {
+      setNestedLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-navy-900/50 z-50 flex items-start justify-center overflow-y-auto p-4">
@@ -64,7 +94,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
               ) : (
                 data.profile.assigned_distributor_name && (
                   <p className="sm:col-span-2">
-                    <span className="text-navy-900/45">Assigned distributor:</span>{" "}
+                    <span className="text-navy-900/45">Assigned sales rep:</span>{" "}
                     {data.profile.assigned_distributor_name} ({data.profile.assigned_distributor_full_name})
                   </p>
                 )
@@ -82,6 +112,64 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
               <StatCard label="Failed payment" value={data.summary.failedPayments} />
             </div>
 
+            {/* Orders / Customers tab switcher — sales reps and distributors only */}
+            {isSalesRep && (
+              <div className="flex gap-2 mb-4 border-b border-navy-900/10">
+                <button
+                  onClick={() => setTab("orders")}
+                  className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
+                    tab === "orders" ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/40"
+                  }`}
+                >
+                  Order history
+                </button>
+                <button
+                  onClick={openCustomersTab}
+                  className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
+                    tab === "customers" ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/40"
+                  }`}
+                >
+                  Customers
+                </button>
+              </div>
+            )}
+
+            {tab === "customers" && isSalesRep ? (
+              <div>
+                <h4 className="font-display font-bold text-navy-900 mb-3">Customers</h4>
+                {customersLoading ? (
+                  <p className="text-sm text-navy-900/50">Loading customers…</p>
+                ) : !customers || customers.length === 0 ? (
+                  <p className="text-sm text-navy-900/50">No customers assigned to this sales rep yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {customers.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => openNestedCustomer(c.id)}
+                        className="border border-navy-900/10 rounded-md p-3 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                      >
+                        <div>
+                          <p className="font-semibold text-navy-900 text-sm flex items-center gap-2">
+                            {c.business_name || c.full_name}
+                            {c.registered_by_distributor_id && (
+                              <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gold-500/20 text-gold-700">
+                                Self-registered
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-navy-900/45">
+                            {c.full_name} · {c.email} · {c.state}
+                          </p>
+                        </div>
+                        <span className="text-xs font-semibold text-navy-800">View orders →</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Orders list */}
             <h4 className="font-display font-bold text-navy-900 mb-3">Order history</h4>
             {data.orders.length === 0 ? (
@@ -109,7 +197,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                     <ul className="text-xs text-navy-900/60 mb-2">
                       {o.items.map((item, idx) => (
                         <li key={idx}>
-                          {item.quantity} × {item.productName} — ₦{Number(item.lineTotal).toLocaleString()}
+                          {item.quantity} × {item.productName}{item.size ? ` (${item.size})` : ""} — ₦{Number(item.lineTotal).toLocaleString()}
                         </li>
                       ))}
                     </ul>
@@ -134,9 +222,20 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                 ))}
               </div>
             )}
+              </>
+            )}
           </div>
         )}
       </div>
+
+      {nestedCustomer && (
+        <ActivityHistoryModal
+          type="customer"
+          data={nestedData}
+          loading={nestedLoading}
+          onClose={() => { setNestedCustomer(null); setNestedData(null); }}
+        />
+      )}
     </div>
   );
 }
