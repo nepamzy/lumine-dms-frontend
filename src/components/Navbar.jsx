@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -7,58 +6,26 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
-    setMenuOpen(false);
     navigate("/");
   };
 
   const dashboardPath =
     user?.role === "admin" ? "/admin" : user?.role === "distributor" ? "/distributor" : "/account";
 
-  const closeMenu = () => setMenuOpen(false);
-
   return (
-    <nav className="bg-navy-800 text-cream-50 relative">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2" onClick={closeMenu}>
+    <nav className="bg-navy-800 text-cream-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-y-2">
+        <Link to="/" className="flex items-center gap-2">
           <span className="w-8 h-8 rounded-full border-2 border-gold-500 flex items-center justify-center font-display font-extrabold text-gold-500 text-sm">
             L
           </span>
           <span className="font-display font-bold tracking-wide text-sm">LUMINE</span>
         </Link>
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-7 text-sm text-cream-50/80">
-          <Link to="/about" className="hover:text-gold-500 transition-colors">
-            About
-          </Link>
-          <Link to="/catalog" className="hover:text-gold-500 transition-colors">
-            Catalog
-          </Link>
-          <Link to="/contact" className="hover:text-gold-500 transition-colors">
-            Contact
-          </Link>
-          {user && (
-            <Link to={dashboardPath} className="hover:text-gold-500 transition-colors">
-              {user.role === "customer" ? "My Orders" : "Dashboard"}
-            </Link>
-          )}
-          {user && (user.role === "customer" || user.role === "distributor") && (
-            <Link to="/profile" className="hover:text-gold-500 transition-colors">
-              Profile
-            </Link>
-          )}
-          {!user && (
-            <Link to="/register" className="hover:text-gold-500 transition-colors">
-              Join Lumine
-            </Link>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {(user?.role === "customer" || user?.role === "distributor") && (
             <Link to="/cart" className="relative text-sm">
               Cart
@@ -69,115 +36,51 @@ export default function Navbar() {
               )}
             </Link>
           )}
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors whitespace-nowrap"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors whitespace-nowrap"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
 
-          {/* Desktop auth button */}
-          <div className="hidden md:block">
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2 rounded-md hover:bg-gold-700 transition-colors"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2 rounded-md hover:bg-gold-700 transition-colors"
-              >
-                Sign In
-              </Link>
-            )}
-          </div>
-
-          {/* Hamburger (mobile only) */}
-          <button
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            className="md:hidden flex flex-col justify-center items-center gap-[5px] w-8 h-8"
-          >
-            <span className="block w-6 h-0.5 bg-cream-50 rounded-full" />
-            <span className="block w-6 h-0.5 bg-cream-50 rounded-full" />
-            <span className="block w-6 h-0.5 bg-cream-50 rounded-full" />
-          </button>
+        {/* Links — always visible on every screen size, no hamburger/hidden menu */}
+        <div className="w-full flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-cream-50/80 pt-1 border-t border-cream-50/10 mt-1">
+          <Link to="/about" className="hover:text-gold-500 transition-colors py-1">
+            About
+          </Link>
+          <Link to="/catalog" className="hover:text-gold-500 transition-colors py-1">
+            Catalog
+          </Link>
+          <Link to="/contact" className="hover:text-gold-500 transition-colors py-1">
+            Contact
+          </Link>
+          {user && (
+            <Link to={dashboardPath} className="hover:text-gold-500 transition-colors py-1">
+              {user.role === "customer" ? "My Orders" : "Dashboard"}
+            </Link>
+          )}
+          {user && (user.role === "customer" || user.role === "distributor") && (
+            <Link to="/profile" className="hover:text-gold-500 transition-colors py-1">
+              Profile
+            </Link>
+          )}
+          {!user && (
+            <Link to="/register" className="hover:text-gold-500 transition-colors py-1">
+              Join Lumine
+            </Link>
+          )}
         </div>
       </div>
-
-      {/* Mobile full-screen menu */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 bg-white text-navy-900 md:hidden overflow-y-auto">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-navy-900/10">
-            <span className="font-display font-bold text-xl text-navy-900">Lumine</span>
-            <button onClick={closeMenu} aria-label="Close menu" className="text-2xl leading-none">
-              ×
-            </button>
-          </div>
-
-          <div className="flex flex-col px-6 py-2 text-lg divide-y divide-navy-900/10">
-            <Link to="/" onClick={closeMenu} className="py-4">
-              Home
-            </Link>
-            <Link to="/about" onClick={closeMenu} className="py-4">
-              About
-            </Link>
-            <Link to="/catalog" onClick={closeMenu} className="py-4">
-              Products
-            </Link>
-            <Link to="/register?role=distributor" onClick={closeMenu} className="py-4">
-              Become a Distributor
-            </Link>
-            <Link to="/register?role=sales_rep" onClick={closeMenu} className="py-4">
-              Become a Sales Rep
-            </Link>
-            <Link to="/register?role=customer" onClick={closeMenu} className="py-4">
-              Become a Customer
-            </Link>
-            <Link to="/#faqs" onClick={closeMenu} className="py-4">
-              FAQs
-            </Link>
-            <Link to="/contact" onClick={closeMenu} className="py-4">
-              Contact
-            </Link>
-            {user && (
-              <Link to={dashboardPath} onClick={closeMenu} className="py-4">
-                {user.role === "customer" ? "My Orders" : "Dashboard"}
-              </Link>
-            )}
-            {user && (user.role === "customer" || user.role === "distributor") && (
-              <Link to="/profile" onClick={closeMenu} className="py-4">
-                Profile
-              </Link>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 px-6 py-6">
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="flex-1 bg-gold-500 text-navy-900 font-bold text-sm px-4 py-3 rounded-md"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  onClick={closeMenu}
-                  className="flex-1 text-center border border-navy-900/20 text-navy-900 font-semibold text-sm px-4 py-3 rounded-md"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={closeMenu}
-                  className="flex-1 text-center bg-navy-800 text-cream-50 font-bold text-sm px-4 py-3 rounded-md"
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

@@ -263,7 +263,6 @@ function RegisterCustomerForRep({ onRegistered }) {
     fullName: "",
     email: "",
     phone: "",
-    password: "",
     state: "Lagos",
     localGovernment: STATE_LGAS["Lagos"][0],
     businessName: "",
@@ -288,8 +287,8 @@ function RegisterCustomerForRep({ onRegistered }) {
     setSubmitting(true);
     try {
       await registerCustomerForRep(form);
-      setSuccess(`${form.fullName} has been registered and assigned to you.`);
-      setForm((f) => ({ ...f, fullName: "", email: "", phone: "", password: "", businessName: "", deliveryAddress: "" }));
+      setSuccess(`${form.fullName} has been saved to your customer book.`);
+      setForm((f) => ({ ...f, fullName: "", email: "", phone: "", businessName: "", deliveryAddress: "" }));
       onRegistered?.();
     } catch (err) {
       setError(err.response?.data?.message || "Couldn't register this customer.");
@@ -301,13 +300,14 @@ function RegisterCustomerForRep({ onRegistered }) {
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-card shadow-card p-6 flex flex-col gap-4 max-w-lg">
       <p className="text-sm text-navy-900/60">
-        For customers who don't have an Android phone (or can't sign up themselves) — fill this
-        out the same way they would, and they'll be assigned straight to you.
+        For customers who don't have an Android phone (or can't sign up themselves) — this just
+        saves their details to your customer book. They won't get a login of their own; when
+        they're ready to buy, place it as your own order (Place Order → Self) and pay for it
+        yourself.
       </p>
       <input required placeholder="Full name" value={form.fullName} onChange={update("fullName")} className="input" />
       <input required type="email" placeholder="Email" value={form.email} onChange={update("email")} className="input" />
       <input required placeholder="Phone" value={form.phone} onChange={update("phone")} className="input" />
-      <input required type="password" placeholder="Password" value={form.password} onChange={update("password")} className="input" />
       <input required placeholder="Business name" value={form.businessName} onChange={update("businessName")} className="input" />
       <select value={form.customerType} onChange={update("customerType")} className="input">
         {CUSTOMER_TYPES.map((c) => (
@@ -342,6 +342,7 @@ function RegisterCustomerForRep({ onRegistered }) {
 
 function SalesRepDashboard({ user, roleLabel }) {
   const [tab, setTab] = useState("route");
+  const [placeOrderMode, setPlaceOrderMode] = useState(null); // null | "customer" | "self"
   const [route, setRoute] = useState([]);
   const [orders, setOrders] = useState([]);
   const [referral, setReferral] = useState(null);
@@ -383,7 +384,7 @@ function SalesRepDashboard({ user, roleLabel }) {
         {["route", "orders", "referral", "place-order", "register-customer", "expiring"].map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); setPlaceOrderMode(null); }}
             className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               tab === t
                 ? "border-gold-500 text-navy-900"
@@ -470,32 +471,61 @@ function SalesRepDashboard({ user, roleLabel }) {
           </p>
         </div>
       ) : tab === "place-order" ? (
-        <div className="flex flex-col gap-3">
-          {myCustomers.length === 0 ? (
-            <p className="text-navy-900/60 text-sm">
-              No customers assigned to you yet. Share your referral link to bring some in.
-            </p>
-          ) : (
-            myCustomers.map((c) => (
-              <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
-                  <p className="text-xs text-navy-900/50">{c.full_name} · {c.email}</p>
+        placeOrderMode === null ? (
+          <div className="flex flex-col sm:flex-row gap-4 max-w-lg">
+            <button
+              onClick={() => setPlaceOrderMode("customer")}
+              className="flex-1 bg-white rounded-card shadow-card p-6 text-left hover:shadow-md transition-shadow"
+            >
+              <p className="font-display font-bold text-navy-900 mb-1">Order for a Customer</p>
+              <p className="text-xs text-navy-900/50">
+                Pick from your customers who have their own account, and order on their behalf.
+              </p>
+            </button>
+            <button
+              onClick={() => navigate("/catalog")}
+              className="flex-1 bg-white rounded-card shadow-card p-6 text-left hover:shadow-md transition-shadow"
+            >
+              <p className="font-display font-bold text-navy-900 mb-1">Order for Myself</p>
+              <p className="text-xs text-navy-900/50">
+                Your own order — paid 100% upfront, no partial payments, capped at 5 packs total.
+              </p>
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setPlaceOrderMode(null)}
+              className="text-xs font-semibold text-navy-800 underline self-start mb-1"
+            >
+              ← Back
+            </button>
+            {myCustomers.length === 0 ? (
+              <p className="text-navy-900/60 text-sm">
+                No customers assigned to you yet. Share your referral link to bring some in.
+              </p>
+            ) : (
+              myCustomers.map((c) => (
+                <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
+                    <p className="text-xs text-navy-900/50">{c.full_name} · {c.email}</p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/catalog?forCustomer=${c.id}&forCustomerName=${encodeURIComponent(c.business_name || c.full_name)}`
+                      )
+                    }
+                    className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2 rounded-md whitespace-nowrap"
+                  >
+                    Place Order
+                  </button>
                 </div>
-                <button
-                  onClick={() =>
-                    navigate(
-                      `/catalog?forCustomer=${c.id}&forCustomerName=${encodeURIComponent(c.business_name || c.full_name)}`
-                    )
-                  }
-                  className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2 rounded-md whitespace-nowrap"
-                >
-                  Place Order
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )
       ) : tab === "register-customer" ? (
         <RegisterCustomerForRep onRegistered={refreshCustomers} />
       ) : tab === "expiring" ? (
