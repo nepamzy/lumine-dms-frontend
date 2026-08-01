@@ -10,10 +10,10 @@ export function halfPackUnits(size) {
 export function packLabelFor(quantity, size) {
   const unit = halfPackUnits(size);
   const halfPacks = quantity / unit;
-  if (halfPacks % 2 === 0) {
-    const packs = halfPacks / 2;
-    return `${packs} Pack${packs === 1 ? "" : "s"}`;
-  }
-  if (halfPacks === 1) return "Half Pack";
-  return `${(halfPacks / 2).toFixed(1)} Packs`;
+  const wholePacks = Math.floor(halfPacks / 2);
+  const hasHalf = halfPacks % 2 === 1;
+
+  if (wholePacks === 0 && hasHalf) return "½ Pack";
+  if (!hasHalf) return `${wholePacks} Pack${wholePacks === 1 ? "" : "s"}`;
+  return `${wholePacks}½ Packs`;
 }

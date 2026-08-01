@@ -4,15 +4,17 @@ import { useCart, resolveUnitPrice } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../api/orders";
 import { acknowledgePaymentNotice } from "../api/auth";
+import { packLabelFor } from "../utils/packSizes";
 
 export default function Checkout() {
-  const { items, total, clearCart, forCustomer, isDistributor } = useCart();
+  const { items, total, clearCart, forCustomer, isDistributor, totalPacksInCart } = useCart();
   const { user, refreshUser } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [ackChecked, setAckChecked] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
   const [showDeliveryNotice, setShowDeliveryNotice] = useState(false);
+  const [ackError, setAckError] = useState(null);
   const navigate = useNavigate();
 
   const needsAcknowledgment = user?.role === "customer" && !user?.acknowledged_payment_notice;
@@ -20,10 +22,15 @@ export default function Checkout() {
   const isSalesRepSelfOrder = isSalesRep && !forCustomer;
 
   const handleAcknowledge = async () => {
+    setAckError(null);
     setAcknowledging(true);
     try {
       await acknowledgePaymentNotice();
       await refreshUser();
+    } catch (err) {
+      setAckError(
+        err.response?.data?.message || "Something went wrong — please try again, or refresh the page."
+      );
     } finally {
       setAcknowledging(false);
     }
@@ -75,6 +82,7 @@ export default function Checkout() {
             I understand that all payment happens on this platform, and no payment made
             outside it will be considered valid.
           </label>
+          {ackError && <p className="text-status-danger text-sm mb-4">{ackError}</p>}
           <button
             disabled={!ackChecked || acknowledging}
             onClick={handleAcknowledge}
@@ -106,11 +114,11 @@ export default function Checkout() {
       )}
       <div className="bg-white rounded-card shadow-card p-5 mb-6">
         {items.map((item) => {
-          const unitPrice = resolveUnitPrice(item, isDistributor);
+          const unitPrice = resolveUnitPrice(item, isDistributor, totalPacksInCart);
           return (
             <div key={item.variantId} className="flex justify-between text-sm py-1.5">
               <span className="text-navy-900/80">
-                {item.productName} — {item.size} × {item.quantity}
+                {item.productName} — {item.size} × {packLabelFor(item.quantity, item.size)}
               </span>
               <span className="font-semibold text-navy-900">
                 ₦{(unitPrice * item.quantity).toLocaleString()}

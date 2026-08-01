@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { packLabelFor } from "./packSizes";
 
 const BRAND = {
   navy: [10, 45, 111], // #0A2D6F
@@ -62,6 +63,13 @@ function drawKeyValueRows(doc, rows, startY, x = 14) {
   return y;
 }
 
+// Compact currency format for the tight items table — full formatNaira()
+// (with "NGN " prefix and 2 decimals) was wide enough to visually collide
+// with the neighboring column at small table widths.
+function formatNairaCompact(amount) {
+  return `N${Number(amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
 function drawItemsTable(doc, items, startY) {
   let y = startY;
   doc.setFillColor(...BRAND.navy);
@@ -70,21 +78,21 @@ function drawItemsTable(doc, items, startY) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("Product", 16, y);
-  doc.text("Size", 100, y);
-  doc.text("Qty", 125, y);
-  doc.text("Unit Price", 145, y);
-  doc.text("Line Total", 178, y, { align: "right" });
-  y += 7;
+  doc.text("Size", 88, y);
+  doc.text("Packs", 112, y);
+  doc.text("Unit Price", 163, y, { align: "right" });
+  doc.text("Line Total", 196, y, { align: "right" });
+  y += 8;
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
 
   for (const item of items) {
     doc.text(String(item.product_name), 16, y);
-    doc.text(String(item.variant_size || "-"), 100, y);
-    doc.text(String(item.quantity), 125, y);
-    doc.text(formatNaira(item.unit_price), 145, y);
-    doc.text(formatNaira(item.line_total), 178, y, { align: "right" });
-    y += 6;
+    doc.text(String(item.variant_size || "-"), 88, y);
+    doc.text(packLabelFor(item.quantity, item.variant_size), 112, y);
+    doc.text(formatNairaCompact(item.unit_price), 163, y, { align: "right" });
+    doc.text(formatNairaCompact(item.line_total), 196, y, { align: "right" });
+    y += 7;
   }
   return y;
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { listCustomers, getCustomerHistory } from "../api/admin";
+import { packLabelFor } from "../utils/packSizes";
 
 function PaymentBadge({ percent }) {
   const style =
@@ -197,7 +198,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                     <ul className="text-xs text-navy-900/60 mb-2">
                       {o.items.map((item, idx) => (
                         <li key={idx}>
-                          {item.quantity} × {item.productName}{item.size ? ` (${item.size})` : ""} — ₦{Number(item.lineTotal).toLocaleString()}
+                          {item.size ? packLabelFor(item.quantity, item.size) : item.quantity} × {item.productName}{item.size ? ` (${item.size})` : ""} — ₦{Number(item.lineTotal).toLocaleString()}
                         </li>
                       ))}
                     </ul>

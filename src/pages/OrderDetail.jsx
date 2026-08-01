@@ -289,7 +289,7 @@ export default function OrderDetail() {
             {order.items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-navy-900/70">
-                  {item.product_name} — {item.variant_size} × {item.quantity}
+                  {item.product_name} — {item.variant_size} × {packLabelFor(item.quantity, item.variant_size)}
                 </span>
                 <span className="font-semibold text-navy-900">
                   ₦{Number(item.line_total).toLocaleString()}

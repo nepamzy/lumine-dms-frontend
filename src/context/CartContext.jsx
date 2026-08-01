@@ -7,16 +7,22 @@ const CartContext = createContext(null);
 // Pricing is per PACK. Customers and sales reps always pay the flat
 // packPrice ("Normal Price") — no discount, ever, regardless of quantity.
 // Only a true distributor buying for themselves gets the bulk pack-count
-// discount tiers. Returns the PER-BOTTLE unit price either way, matching
-// exactly how the backend computes the real order total.
-export function resolveUnitPrice(item, isDistributor) {
+// discount tier — and that tier is chosen using the COMBINED pack count
+// across every item in the cart (all products/sizes together), not this
+// item's own pack count alone. Returns the PER-BOTTLE unit price either
+// way, matching exactly how the backend computes the real order total.
+export function packsFor(item) {
   const packSize = halfPackUnits(item.size) * 2;
-  const packs = item.quantity / packSize;
+  return item.quantity / packSize;
+}
+
+export function resolveUnitPrice(item, isDistributor, totalPacksInCart = packsFor(item)) {
+  const packSize = halfPackUnits(item.size) * 2;
   let pricePerPack = Number(item.packPrice);
 
   if (isDistributor && item.priceTiers?.length) {
     const tier = item.priceTiers.find(
-      (t) => packs >= t.min_qty && (t.max_qty === null || packs <= t.max_qty)
+      (t) => totalPacksInCart >= t.min_qty && (t.max_qty === null || totalPacksInCart <= t.max_qty)
     );
     if (tier) pricePerPack = Number(tier.price);
   }
@@ -108,14 +114,27 @@ export function CartProvider({ children }) {
 
   const isDistributor = user?.role === "distributor" && user?.distributor_type === "distributor";
 
+  const totalPacksInCart = useMemo(() => items.reduce((sum, i) => sum + packsFor(i), 0), [items]);
+
   const total = useMemo(
-    () => items.reduce((sum, i) => sum + resolveUnitPrice(i, isDistributor) * i.quantity, 0),
-    [items, isDistributor]
+    () => items.reduce((sum, i) => sum + resolveUnitPrice(i, isDistributor, totalPacksInCart) * i.quantity, 0),
+    [items, isDistributor, totalPacksInCart]
   );
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, total, forCustomer, setForCustomer, isDistributor }}
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        total,
+        forCustomer,
+        setForCustomer,
+        isDistributor,
+        totalPacksInCart,
+      }}
     >
       {children}
     </CartContext.Provider>

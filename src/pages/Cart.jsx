@@ -7,7 +7,7 @@ import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
 import { halfPackUnits, packLabelFor } from "../utils/packSizes";
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, total, forCustomer, isDistributor } = useCart();
+  const { items, updateQuantity, removeItem, total, forCustomer, isDistributor, totalPacksInCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [worstOrder, setWorstOrder] = useState(null);
@@ -60,7 +60,7 @@ export default function Cart() {
 
       <div className="flex flex-col gap-3 mb-6">
         {items.map((item) => {
-          const unitPrice = resolveUnitPrice(item, isDistributor);
+          const unitPrice = resolveUnitPrice(item, isDistributor, totalPacksInCart);
           const basePrice = Number(item.packPrice) / (halfPackUnits(item.size) * 2);
           const isDiscounted = isDistributor && unitPrice < basePrice;
           const lineTotal = unitPrice * item.quantity;
