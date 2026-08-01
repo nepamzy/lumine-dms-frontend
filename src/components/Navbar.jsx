@@ -142,6 +142,11 @@ export default function Navbar() {
                 {user.role === "customer" ? "My Orders" : "Dashboard"}
               </Link>
             )}
+            {user && (user.role === "customer" || user.role === "distributor") && (
+              <Link to="/profile" onClick={closeMenu} className="py-4">
+                Profile
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3 px-6 py-6">

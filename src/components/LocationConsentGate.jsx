@@ -38,10 +38,19 @@ export default function LocationConsentGate() {
           setRequesting(false);
         }
       },
-      () => {
-        setError(
-          "Location access was denied. Lumine requires this to continue — please allow location access in your browser's site settings and try again."
-        );
+      (geoErr) => {
+        if (geoErr.code === 1) {
+          // PERMISSION_DENIED — browsers won't re-show their own popup once
+          // blocked; the only fix is the person changing it themselves in
+          // their browser's site settings, so we point them there directly.
+          setError(
+            "Location was blocked for this site. To fix it: tap the lock/info icon next to the web address, find \"Location,\" and set it to Allow — then try again."
+          );
+        } else if (geoErr.code === 3) {
+          setError("Getting your location took too long. Please check your connection and try again.");
+        } else {
+          setError("Couldn't get your location right now. Please try again.");
+        }
         setRequesting(false);
       },
       { timeout: 8000 }
@@ -54,7 +63,8 @@ export default function LocationConsentGate() {
         <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Location access needed</h2>
         <p className="text-sm text-navy-900/60 mb-5">
           As a {roleLabel} on Lumine, we need your location to continue — it's used to show accurate
-          delivery and coverage information. Please allow location access to keep using your account.
+          delivery and coverage information. Tap below, then respond to your browser's own permission
+          popup (it usually appears near the address bar).
         </p>
         {error && <p className="text-status-danger text-xs mb-4">{error}</p>}
         <button

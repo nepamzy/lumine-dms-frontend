@@ -68,8 +68,8 @@ export default function Register() {
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => {
-          if (locationRequiredForKind) reject(new Error("denied"));
+        (geoErr) => {
+          if (locationRequiredForKind) reject(geoErr);
           else resolve({ latitude: null, longitude: null }); // distributor — never blocks signup
         },
         { timeout: 8000 }
@@ -85,10 +85,18 @@ export default function Register() {
       let latitude, longitude;
       try {
         ({ latitude, longitude } = await getLocation());
-      } catch {
-        setError(
-          "Location access is required to sign up as a Customer or Sales Rep. Please allow location access in your browser and try again."
-        );
+      } catch (geoErr) {
+        if (geoErr.code === 1) {
+          setError(
+            "Location was blocked for this site. Tap the lock/info icon next to the web address, find \"Location,\" set it to Allow, then try again."
+          );
+        } else if (geoErr.code === 3) {
+          setError("Getting your location took too long. Please check your connection and try again.");
+        } else {
+          setError(
+            "Location access is required to sign up as a Customer or Sales Rep — please allow it when your browser asks, then try again."
+          );
+        }
         setSubmitting(false);
         return;
       }
