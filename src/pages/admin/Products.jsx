@@ -259,8 +259,12 @@ function ManageBatchesModal({ product, onClose, onSaved }) {
     }
   };
 
-  const removeBatch = async (batchId) => {
-    if (!window.confirm("Delete this out-of-stock batch? This can't be undone.")) return;
+  const removeBatch = async (batchId, quantityOnHand) => {
+    const warning =
+      Number(quantityOnHand) > 0
+        ? `This batch still has ${quantityOnHand} bottles in stock — deleting it removes that stock permanently. Continue?`
+        : "Delete this batch? This can't be undone.";
+    if (!window.confirm(warning)) return;
     setError(null);
     setSavingId(batchId);
     try {
@@ -306,9 +310,9 @@ function ManageBatchesModal({ product, onClose, onSaved }) {
                   Save
                 </button>
                 <button
-                  disabled={savingId === b.id || Number(b.quantity_on_hand) > 0}
-                  onClick={() => removeBatch(b.id)}
-                  title={Number(b.quantity_on_hand) > 0 ? "Set quantity to 0 first" : "Delete batch"}
+                  disabled={savingId === b.id}
+                  onClick={() => removeBatch(b.id, b.quantity_on_hand)}
+                  title="Delete batch"
                   className="text-status-danger font-semibold text-xs underline disabled:opacity-30"
                 >
                   Delete

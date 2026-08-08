@@ -52,9 +52,18 @@ export default function Orders() {
                   </p>
                 </Link>
 
-                <span className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${styles.bg} ${styles.text}`}>
-                  {order.paymentPercent.toFixed(0)}% paid
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${
+                      order.paymentPercent >= 100 ? "bg-green-500/15 text-green-500" : "bg-navy-900/10 text-navy-900/60"
+                    }`}
+                  >
+                    {order.paymentPercent >= 100 ? "Complete" : "Pending"}
+                  </span>
+                  <span className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${styles.bg} ${styles.text}`}>
+                    {order.paymentPercent.toFixed(0)}% paid
+                  </span>
+                </div>
 
                 {order.buyerKind === "customer" && !order.distributor_id && (
                   <select

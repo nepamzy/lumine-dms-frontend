@@ -1,22 +1,74 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { updateLocation } from "../api/auth";
+import { updateLocation, registerLocationStrike } from "../api/auth";
 
-// Full-screen, non-dismissible gate that re-asks Customers and Sales Reps
-// for location on every fresh page load — deliberately NOT remembered
-// across refreshes. `grantedThisLoad` is plain component state, so a
-// browser refresh remounts the whole app and resets it to false again,
-// forcing the prompt every time. True Distributors are exempt.
+// Gates Customers, Sales Reps, AND Distributors behind a real, current
+// check of their browser's actual geolocation permission — not just
+// "did they ever grant it." Uses the Permissions API where available to
+// silently check status in the background; only shows the blocking modal
+// when permission is genuinely not granted right now. Each time that
+// happens, it counts as a strike against the account (Sales
+// Reps/Distributors only — repeatedly turning location off is treated as
+// a policy violation, not just an inconvenience).
 export default function LocationConsentGate() {
   const { user, refreshUser } = useAuth();
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState(null);
-  const [grantedThisLoad, setGrantedThisLoad] = useState(false);
+  const [permissionState, setPermissionState] = useState("checking"); // "checking" | "granted" | "needs-prompt"
+  const [strikes, setStrikes] = useState(null);
 
-  const isGatedRole = user && (user.role === "customer" || user.distributor_type === "sales_rep");
-  if (!isGatedRole || grantedThisLoad) return null;
+  const isGatedRole = user && user.role !== "admin"; // customer, sales_rep, or distributor
 
-  const roleLabel = user.role === "customer" ? "Customer" : "Sales Rep";
+  useEffect(() => {
+    if (!isGatedRole) return;
+    let cancelled = false;
+
+    async function checkPermission() {
+      if (!navigator.permissions || !navigator.permissions.query) {
+        // Permissions API unsupported (older Safari, some browsers) —
+        // fall back to just trying geolocation directly when needed.
+        if (!cancelled) setPermissionState("needs-prompt");
+        return;
+      }
+      try {
+        const status = await navigator.permissions.query({ name: "geolocation" });
+        if (cancelled) return;
+        if (status.state === "granted") {
+          setPermissionState("granted");
+        } else {
+          setPermissionState("needs-prompt");
+        }
+        // Keep watching — if the person revokes permission from browser
+        // settings while the tab is open, catch that too.
+        status.onchange = () => {
+          setPermissionState(status.state === "granted" ? "granted" : "needs-prompt");
+        };
+      } catch {
+        if (!cancelled) setPermissionState("needs-prompt");
+      }
+    }
+
+    checkPermission();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Register a strike the moment we detect location isn't granted for a
+  // Sales Rep or Distributor — once per detection, not on every render.
+  useEffect(() => {
+    if (permissionState !== "needs-prompt") return;
+    if (!user || user.role === "customer" || user.role === "admin") return;
+    registerLocationStrike()
+      .then((r) => setStrikes(r.strikes))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionState, user?.id]);
+
+  if (!isGatedRole || permissionState !== "needs-prompt") return null;
+
+  const roleLabel = user.role === "customer" ? "Customer" : user.distributor_type === "distributor" ? "Distributor" : "Sales Rep";
 
   const handleAllow = () => {
     setError(null);
@@ -31,7 +83,7 @@ export default function LocationConsentGate() {
         try {
           await updateLocation(pos.coords.latitude, pos.coords.longitude);
           await refreshUser();
-          setGrantedThisLoad(true); // holds until the next actual page refresh
+          setPermissionState("granted");
         } catch {
           setError("Couldn't save your location. Please try again.");
         } finally {
@@ -40,11 +92,8 @@ export default function LocationConsentGate() {
       },
       (geoErr) => {
         if (geoErr.code === 1) {
-          // PERMISSION_DENIED — browsers won't re-show their own popup once
-          // blocked; the only fix is the person changing it themselves in
-          // their browser's site settings, so we point them there directly.
           setError(
-            "Location was blocked for this site. To fix it: tap the lock/info icon next to the web address, find \"Location,\" and set it to Allow — then try again."
+            "Location was blocked for this site. Tap the lock/info icon next to the web address, find \"Location,\" set it to Allow, then try again."
           );
         } else if (geoErr.code === 3) {
           setError("Getting your location took too long. Please check your connection and try again.");
@@ -62,9 +111,9 @@ export default function LocationConsentGate() {
       <div className="bg-white rounded-card max-w-sm w-full p-6 text-center">
         <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Location access needed</h2>
         <p className="text-sm text-navy-900/60 mb-5">
-          As a {roleLabel} on Lumine, we need your location to continue — it's used to show accurate
-          delivery and coverage information. Tap below, then respond to your browser's own permission
-          popup (it usually appears near the address bar).
+          Location is mandatory on Lumine for {roleLabel}s. Tap below, then respond to your browser's
+          own permission popup (it usually appears near the address bar). You can't continue using
+          your account until it's on.
         </p>
         {error && <p className="text-status-danger text-xs mb-4">{error}</p>}
         <button
@@ -74,6 +123,12 @@ export default function LocationConsentGate() {
         >
           {requesting ? "Requesting…" : "Allow Location Access"}
         </button>
+        {user.role !== "customer" && strikes != null && strikes > 0 && (
+          <p className="mt-4 text-xs font-semibold text-status-danger bg-status-danger/10 rounded-md px-3 py-2">
+            {strikes} out of 5 strikes. Continuous deactivation of location on this app will cause your
+            account to be blocked/removed. Stop deactivating your location on this app.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -82,8 +82,14 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
               <p><span className="text-navy-900/45">Contact:</span> {data.profile.full_name}</p>
               <p><span className="text-navy-900/45">Email:</span> {data.profile.email}</p>
               <p><span className="text-navy-900/45">Phone:</span> {data.profile.phone}</p>
+              <p className="sm:col-span-2">
+                <span className="text-navy-900/45">Address:</span>{" "}
+                {data.profile.address || (
+                  <span className="text-navy-900/30 italic">Not provided</span>
+                )}
+              </p>
               <p>
-                <span className="text-navy-900/45">Location:</span>{" "}
+                <span className="text-navy-900/45">Region:</span>{" "}
                 {data.profile.local_government ? `${data.profile.local_government}, ` : ""}
                 {data.profile.state}
               </p>
@@ -188,8 +194,14 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/60 whitespace-nowrap">
-                          {o.status}
+                        <span
+                          className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${
+                            o.payment_percent >= 100
+                              ? "bg-green-500/15 text-green-500"
+                              : "bg-navy-900/10 text-navy-900/60"
+                          }`}
+                        >
+                          {o.payment_percent >= 100 ? "Complete" : "Pending"}
                         </span>
                         <PaymentBadge percent={o.payment_percent} />
                       </div>

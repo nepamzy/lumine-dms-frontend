@@ -32,6 +32,7 @@ export default function Register() {
     businessName: "",
     customerType: "retailer",
     deliveryAddress: "",
+    address: "",
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -192,13 +193,23 @@ export default function Register() {
             </Field>
           </>
         ) : kind === "sales_rep" ? (
-          <Field label="Business name (optional)">
-            <input value={form.businessName} onChange={update("businessName")} className="input" />
-          </Field>
+          <>
+            <Field label="Business name (optional)">
+              <input value={form.businessName} onChange={update("businessName")} className="input" />
+            </Field>
+            <Field label="Address">
+              <textarea required value={form.address} onChange={update("address")} className="input" rows={2} />
+            </Field>
+          </>
         ) : (
-          <Field label="Business name">
-            <input required value={form.businessName} onChange={update("businessName")} className="input" />
-          </Field>
+          <>
+            <Field label="Business name">
+              <input required value={form.businessName} onChange={update("businessName")} className="input" />
+            </Field>
+            <Field label="Address">
+              <textarea required value={form.address} onChange={update("address")} className="input" rows={2} />
+            </Field>
+          </>
         )}
 
         {kind !== "customer" && (

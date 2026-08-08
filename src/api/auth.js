@@ -40,3 +40,8 @@ export async function updateLocation(latitude, longitude) {
   const { data } = await api.patch("/auth/me/location", { latitude, longitude });
   return data.data;
 }
+
+export async function registerLocationStrike() {
+  const { data } = await api.post("/auth/me/location-strike");
+  return data.data;
+}
