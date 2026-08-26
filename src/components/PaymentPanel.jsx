@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
-import { initializePayment, logPayment } from "../api/orders";
+import { initializePayment, logPayment, verifyPayment } from "../api/orders";
 import { downloadPaymentReceipt, downloadOrderReceipt } from "../utils/receipt";
 
 const STATUS_LABELS = {
@@ -30,6 +30,13 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
   const [manualSubmitting, setManualSubmitting] = useState(false);
   const [manualError, setManualError] = useState(null);
 
+  // Which payment row (by id) is currently being re-checked against
+  // Paystack, and what the last recheck said — lets a buyer or admin force
+  // a fresh check on a "Failed" or "Awaiting confirmation" row instead of
+  // trusting whatever the site happened to record the first time.
+  const [rechecking, setRechecking] = useState(null);
+  const [recheckNote, setRecheckNote] = useState({});
+
   const percent = order.payment.percent;
   const band = getPaymentBand(percent);
   const styles = getPaymentBandStyles(band);
@@ -51,6 +58,31 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
     } catch (err) {
       setError(err.response?.data?.message || "Couldn't start payment");
       setSubmitting(false);
+    }
+  };
+
+  // Re-asks Paystack directly whether this specific payment actually went
+  // through — the same check the backend does automatically, just
+  // triggered on demand. Useful exactly for the case where money reached
+  // Paystack but the site's one-shot check missed it and marked it Failed.
+  const handleRecheck = async (payment) => {
+    if (!payment.paystack_reference) return;
+    setRechecking(payment.id);
+    setRecheckNote((prev) => ({ ...prev, [payment.id]: null }));
+    try {
+      const { paymentStatus } = await verifyPayment(payment.paystack_reference);
+      await onUpdated?.();
+      if (paymentStatus === "successful") {
+        setRecheckNote((prev) => ({ ...prev, [payment.id]: "Confirmed — this payment has now been marked successful." }));
+      } else if (paymentStatus === "pending") {
+        setRecheckNote((prev) => ({ ...prev, [payment.id]: "Paystack hasn't given a final answer yet — try again shortly." }));
+      } else {
+        setRecheckNote((prev) => ({ ...prev, [payment.id]: "Paystack confirms this one didn't go through." }));
+      }
+    } catch (err) {
+      setRecheckNote((prev) => ({ ...prev, [payment.id]: "Couldn't reach Paystack right now — try again in a moment." }));
+    } finally {
+      setRechecking(null);
     }
   };
 
@@ -120,23 +152,37 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
           <p className="text-xs font-semibold text-navy-900/60 mb-2">Payment history</p>
           <div className="flex flex-col gap-2">
             {order.payment.payments.map((p) => (
-              <div key={p.id} className="flex justify-between items-center text-xs text-navy-900/60 border-b border-navy-900/5 pb-1.5">
-                <span>
-                  {new Date(p.recorded_at).toLocaleDateString()} — {p.recorded_by_name}
-                  {" · "}
-                  <span className={`font-semibold ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="font-semibold text-navy-900">₦{Number(p.amount).toLocaleString()}</span>
-                  {showReceipts && p.status === "successful" && (
-                    <button
-                      onClick={() => downloadPaymentReceipt(order, p, { generatedFor })}
-                      className="text-[10px] font-semibold text-navy-800 underline"
-                    >
-                      Receipt
-                    </button>
-                  )}
-                </span>
+              <div key={p.id} className="flex flex-col gap-0.5 border-b border-navy-900/5 pb-1.5">
+                <div className="flex justify-between items-center text-xs text-navy-900/60">
+                  <span>
+                    {new Date(p.recorded_at).toLocaleDateString()} — {p.recorded_by_name}
+                    {" · "}
+                    <span className={`font-semibold ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-semibold text-navy-900">₦{Number(p.amount).toLocaleString()}</span>
+                    {showReceipts && p.status === "successful" && (
+                      <button
+                        onClick={() => downloadPaymentReceipt(order, p, { generatedFor })}
+                        className="text-[10px] font-semibold text-navy-800 underline"
+                      >
+                        Receipt
+                      </button>
+                    )}
+                    {(p.status === "failed" || p.status === "pending") && p.paystack_reference && (
+                      <button
+                        onClick={() => handleRecheck(p)}
+                        disabled={rechecking === p.id}
+                        className="text-[10px] font-semibold text-navy-800 underline disabled:opacity-50"
+                      >
+                        {rechecking === p.id ? "Checking…" : "Recheck with Paystack"}
+                      </button>
+                    )}
+                  </span>
+                </div>
+                {recheckNote[p.id] && (
+                  <p className="text-[10px] text-navy-900/50 text-right">{recheckNote[p.id]}</p>
+                )}
               </div>
             ))}
           </div>

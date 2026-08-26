@@ -16,6 +16,7 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState(null);
   const [editing, setEditing] = useState(false);
   const [draftItems, setDraftItems] = useState([]); // [{ variantId, size, productName, quantity }]
   const [editError, setEditError] = useState(null);
@@ -29,16 +30,68 @@ export default function OrderDetail() {
 
   // Coming back from Paystack's checkout — confirm with our backend, which
   // re-checks with Paystack directly rather than trusting the redirect.
+  // A single check right after landing back here isn't enough: some
+  // payment methods (bank transfer, USSD, a slow connection) can take a
+  // little while to show as confirmed on Paystack's side even though the
+  // money already moved, so instead of accepting one answer we keep
+  // re-checking for up to ~40 seconds before giving up on this page (the
+  // backend keeps re-checking in the background either way, and the
+  // "Recheck with Paystack" button below can be used any time after that).
   useEffect(() => {
     const ref = searchParams.get("paystack_ref");
     if (!ref) return;
+
+    let cancelled = false;
+    const POLL_INTERVAL_MS = 4000;
+    const POLL_MAX_ATTEMPTS = 10;
+
     setVerifying(true);
-    verifyPayment(ref)
-      .then((updated) => {
-        setOrder(updated);
-        setSearchParams({}, { replace: true }); // clean the URL
-      })
-      .finally(() => setVerifying(false));
+    setVerifyMessage("Confirming your payment with Paystack…");
+
+    const poll = (attempt) => {
+      verifyPayment(ref)
+        .then(({ order: updated, paymentStatus }) => {
+          if (cancelled) return;
+          setOrder(updated);
+
+          if (paymentStatus === "successful" || paymentStatus === "failed") {
+            setSearchParams({}, { replace: true });
+            setVerifying(false);
+            setVerifyMessage(null);
+            return;
+          }
+
+          if (attempt >= POLL_MAX_ATTEMPTS) {
+            // Still not conclusive after ~40s — stop polling this page, but
+            // this is NOT a failure. Leave the URL param off and let the
+            // backend's reconciliation job (or the Recheck button) finish
+            // the job whenever Paystack gives a final answer.
+            setSearchParams({}, { replace: true });
+            setVerifying(false);
+            setVerifyMessage(
+              "Still confirming with Paystack — this can take a few minutes for some payment methods. We'll keep checking automatically, or you can use \"Recheck with Paystack\" on this payment shortly."
+            );
+            setTimeout(() => setVerifyMessage(null), 10000);
+            return;
+          }
+
+          setTimeout(() => poll(attempt + 1), POLL_INTERVAL_MS);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          if (attempt >= POLL_MAX_ATTEMPTS) {
+            setVerifying(false);
+            setVerifyMessage("Couldn't reach our server to confirm this payment — please use \"Recheck with Paystack\" below.");
+            return;
+          }
+          setTimeout(() => poll(attempt + 1), POLL_INTERVAL_MS);
+        });
+    };
+
+    poll(1);
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -156,9 +209,9 @@ export default function OrderDetail() {
         <OrderStatusStepper stage={order.stage} buyerKind={order.buyerKind} />
       </div>
 
-      {verifying && (
+      {(verifying || verifyMessage) && (
         <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-5 text-sm font-semibold">
-          Confirming your payment with Paystack…
+          {verifyMessage || "Confirming your payment with Paystack…"}
         </div>
       )}
 

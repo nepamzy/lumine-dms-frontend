@@ -58,9 +58,13 @@ export async function initializePayment(orderId, amount) {
   return data.data; // { authorizationUrl, reference }
 }
 
-// Called after Paystack redirects back — confirms with Paystack directly
-// (never trusts the redirect alone) and returns the fresh order.
+// Called after Paystack redirects back — and reusable any time as a manual
+// "Recheck with Paystack" action on a pending/failed payment row. Confirms
+// with Paystack directly (never trusts the redirect alone). paymentStatus
+// is "successful" | "pending" | "failed" — "pending" means Paystack hasn't
+// given a conclusive answer yet, not that it failed, so callers should keep
+// checking rather than treat it as a dead end.
 export async function verifyPayment(reference) {
   const { data } = await api.get(`/payments/verify/${reference}`);
-  return data.data;
+  return { order: data.data, paymentStatus: data.paymentStatus, flagged: data.flagged };
 }
