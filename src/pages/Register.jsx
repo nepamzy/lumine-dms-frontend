@@ -55,24 +55,19 @@ export default function Register() {
   // so the new customer auto-attaches to that distributor on creation.
   const referralCode = searchParams.get("ref") || null;
 
-  // Location is MANDATORY for Customer and Sales Rep sign-ups — denying or
-  // failing to grant it blocks the account from being created at all. A
-  // true Distributor is exempt, so failure there is silently tolerated.
-  const locationRequiredForKind = kind === "customer" || kind === "sales_rep";
-
+  // Location is requested (via the browser's own permission prompt) at
+  // signup for Customer and Sales Rep accounts, but it's optional —
+  // granting, denying, or dismissing that browser prompt never blocks
+  // account creation.
   const getLocation = () => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        if (locationRequiredForKind) reject(new Error("no_geolocation"));
-        else resolve({ latitude: null, longitude: null });
+        resolve({ latitude: null, longitude: null });
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        (geoErr) => {
-          if (locationRequiredForKind) reject(geoErr);
-          else resolve({ latitude: null, longitude: null }); // distributor — never blocks signup
-        },
+        () => resolve({ latitude: null, longitude: null }), // denied/failed — signup proceeds anyway
         { timeout: 8000 }
       );
     });
@@ -83,24 +78,7 @@ export default function Register() {
     setError(null);
     setSubmitting(true);
     try {
-      let latitude, longitude;
-      try {
-        ({ latitude, longitude } = await getLocation());
-      } catch (geoErr) {
-        if (geoErr.code === 1) {
-          setError(
-            "Location was blocked for this site. Tap the lock/info icon next to the web address, find \"Location,\" set it to Allow, then try again."
-          );
-        } else if (geoErr.code === 3) {
-          setError("Getting your location took too long. Please check your connection and try again.");
-        } else {
-          setError(
-            "Location access is required to sign up as a Customer or Sales Rep — please allow it when your browser asks, then try again."
-          );
-        }
-        setSubmitting(false);
-        return;
-      }
+      const { latitude, longitude } = await getLocation();
       const role = kind === "customer" ? "customer" : "distributor";
       const distributorType = kind === "distributor" ? "distributor" : kind === "sales_rep" ? "sales_rep" : undefined;
       const result = await register({ ...form, role, distributorType, latitude, longitude, referralCode });
@@ -215,13 +193,6 @@ export default function Register() {
         {kind !== "customer" && (
           <p className="text-xs text-navy-900/50 bg-navy-900/5 rounded-md p-3">
             {kind === "distributor" ? "Distributor" : "Sales rep"} accounts require admin approval before you can sign in.
-          </p>
-        )}
-
-        {locationRequiredForKind && (
-          <p className="text-xs text-navy-900/50 bg-navy-900/5 rounded-md p-3">
-            {kind === "customer" ? "Customer" : "Sales rep"} accounts require location access — you'll be asked to
-            allow it when you submit this form, and signup can't complete without it.
           </p>
         )}
 
