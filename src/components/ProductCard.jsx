@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProductVariants } from "../api/products";
 import { resolveUnitPrice } from "../context/CartContext";
-import { halfPackUnits, packLabelFor } from "../utils/packSizes";
+import { quarterPackUnits, packLabelFor } from "../utils/packSizes";
 import { useAuth } from "../context/AuthContext";
 import fullcream35cl from "../assets/fullcream-35cl.png";
 import fullcream50cl from "../assets/fullcream-50cl.png";
@@ -48,7 +48,7 @@ export default function ProductCard({ product, onAdd }) {
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [halfPackCount, setHalfPackCount] = useState(1); // number of half-packs
+  const [quarterPackCount, setQuarterPackCount] = useState(1); // number of quarter-packs — the smallest orderable unit
 
   useEffect(() => {
     getProductVariants(product.id)
@@ -60,9 +60,9 @@ export default function ProductCard({ product, onAdd }) {
   }, [product.id]);
 
   const activeVariant = variants.find((v) => v.size === selectedSize);
-  const unitsPerHalfPack = halfPackUnits(selectedSize);
-  const quantity = halfPackCount * unitsPerHalfPack;
-  const basePrice = activeVariant ? Number(activeVariant.packPrice) / (unitsPerHalfPack * 2) : 0;
+  const unitsPerQuarterPack = quarterPackUnits(selectedSize);
+  const quantity = quarterPackCount * unitsPerQuarterPack;
+  const basePrice = activeVariant ? Number(activeVariant.packPrice) / (unitsPerQuarterPack * 4) : 0;
   const unitPrice = activeVariant ? resolveUnitPrice({ ...activeVariant, quantity }, isDistributor) : 0;
   const lineTotal = unitPrice * quantity;
   const baseLineTotal = basePrice * quantity;
@@ -70,7 +70,7 @@ export default function ProductCard({ product, onAdd }) {
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
-    setHalfPackCount(1); // reset to half-pack whenever size changes, pack sizes differ per size
+    setQuarterPackCount(1); // reset to a quarter-pack whenever size changes, pack sizes differ per size
   };
 
   const packLabel = packLabelFor(quantity, selectedSize);
@@ -143,12 +143,12 @@ export default function ProductCard({ product, onAdd }) {
             ))}
           </div>
 
-          {/* Half-pack quantity stepper — orders are placed in half-pack
-              increments, never single bottles */}
+          {/* Quarter-pack quantity stepper — orders are placed in
+              quarter-pack increments, never single bottles */}
           <div className="flex items-center gap-2 mb-1">
             <button
               type="button"
-              onClick={() => setHalfPackCount((n) => Math.max(1, n - 1))}
+              onClick={() => setQuarterPackCount((n) => Math.max(1, n - 1))}
               className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
             >
               −
@@ -156,7 +156,7 @@ export default function ProductCard({ product, onAdd }) {
             <span className="text-sm font-semibold text-navy-900 w-24 text-center">{packLabel}</span>
             <button
               type="button"
-              onClick={() => setHalfPackCount((n) => n + 1)}
+              onClick={() => setQuarterPackCount((n) => n + 1)}
               className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
             >
               +

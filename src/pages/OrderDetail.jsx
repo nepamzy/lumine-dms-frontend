@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext";
 import { getOrder, confirmTransport, confirmReceived, verifyPayment, cancelOrder, editOrderItems } from "../api/orders";
 import { deleteOrder } from "../api/admin";
-import { halfPackUnits, packLabelFor } from "../utils/packSizes";
+import { quarterPackUnits, packLabelFor } from "../utils/packSizes";
 import OrderStatusStepper from "../components/OrderStatusStepper";
 import PaymentPanel from "../components/PaymentPanel";
 
@@ -132,7 +132,7 @@ export default function OrderDetail() {
     setDraftItems((prev) =>
       prev.map((it) => {
         if (it.variantId !== variantId) return it;
-        const step = halfPackUnits(it.size);
+        const step = quarterPackUnits(it.size);
         return { ...it, quantity: Math.max(0, it.quantity + delta * step) };
       })
     );

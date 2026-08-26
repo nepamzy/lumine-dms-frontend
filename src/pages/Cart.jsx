@@ -4,7 +4,7 @@ import { useCart, resolveUnitPrice } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { listMyOrders } from "../api/orders";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
-import { halfPackUnits, packLabelFor } from "../utils/packSizes";
+import { quarterPackUnits, packLabelFor } from "../utils/packSizes";
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, forCustomer, isDistributor, totalPacksInCart } = useCart();
@@ -61,7 +61,7 @@ export default function Cart() {
       <div className="flex flex-col gap-3 mb-6">
         {items.map((item) => {
           const unitPrice = resolveUnitPrice(item, isDistributor, totalPacksInCart);
-          const basePrice = Number(item.packPrice) / (halfPackUnits(item.size) * 2);
+          const basePrice = Number(item.packPrice) / (quarterPackUnits(item.size) * 4);
           const isDiscounted = isDistributor && unitPrice < basePrice;
           const lineTotal = unitPrice * item.quantity;
           const baseLineTotal = basePrice * item.quantity;
@@ -86,7 +86,7 @@ export default function Cart() {
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => updateQuantity(item.variantId, Math.max(halfPackUnits(item.size), item.quantity - halfPackUnits(item.size)))}
+                    onClick={() => updateQuantity(item.variantId, Math.max(quarterPackUnits(item.size), item.quantity - quarterPackUnits(item.size)))}
                     className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold text-sm"
                   >
                     −
@@ -96,7 +96,7 @@ export default function Cart() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => updateQuantity(item.variantId, item.quantity + halfPackUnits(item.size))}
+                    onClick={() => updateQuantity(item.variantId, item.quantity + quarterPackUnits(item.size))}
                     className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold text-sm"
                   >
                     +
