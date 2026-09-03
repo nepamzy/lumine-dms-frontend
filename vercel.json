@@ -1,6 +1,12 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "lumine-dms-frontend.vercel.app" }],
+      "destination": "https://www.lummine.site/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "lumine-dms-frontend.vercel.app" }],
       "destination": "https://www.lummine.site/:path*",
