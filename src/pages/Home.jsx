@@ -18,9 +18,9 @@ const FLAVORS = [
     name: "Full Cream",
     color: "#0A2D6F",
     sizes: [
-      { label: "35cl", image: fullcream35cl },
-      { label: "50cl", image: fullcream50cl },
-      { label: "1 Litre", image: fullcream1L },
+      { label: "35cl", image: lite35cl },
+      { label: "50cl", image: lite50cl },
+      { label: "1 Litre", image: lite1L },
     ],
   },
   {
@@ -36,9 +36,9 @@ const FLAVORS = [
     name: "Lite",
     color: "#0F4DB8",
     sizes: [
-      { label: "35cl", image: lite35cl },
-      { label: "50cl", image: lite50cl },
-      { label: "1 Litre", image: lite1L },
+      { label: "35cl", image: fullcream35cl },
+      { label: "50cl", image: fullcream50cl },
+      { label: "1 Litre", image: fullcream1L },
     ],
   },
 ];
