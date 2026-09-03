@@ -3,7 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMyRoute, markDelivered, markFailed, updateGps } from "../api/deliveries";
 import { listMyOrders } from "../api/orders";
-import { getMyReferral, listMyCustomers, registerCustomerForRep } from "../api/distributor";
+import {
+  getMyReferral,
+  listMyCustomers,
+  registerCustomerForRep,
+  listTrackRecordCustomers,
+  getCustomerHistoryForRep,
+  pingCustomer,
+} from "../api/distributor";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
 import STATE_LGAS from "../data/nigeria-states-lgas.json";
@@ -254,6 +261,136 @@ function DistributorSimpleDashboard({ user }) {
   );
 }
 
+// Customer list -> tap a customer -> their full order history with amount
+// paid/remaining/percentage, plus a Ping button per unpaid order that
+// sends an SMS payment reminder. Customers who've since been reassigned or
+// removed still show up here (with only their fully-paid orders visible)
+// rather than just disappearing — see distributor.service.js's
+// getCustomerHistoryForRep for the actual cascading rule.
+function TrackRecordTab() {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null); // customer row, or null for list view
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [pinging, setPingingId] = useState(null);
+  const [pingSent, setPingSentId] = useState(null);
+
+  useEffect(() => {
+    listTrackRecordCustomers().then(setCustomers).finally(() => setLoading(false));
+  }, []);
+
+  const openCustomer = async (customer) => {
+    setSelected(customer);
+    setHistoryLoading(true);
+    setPingSentId(null);
+    try {
+      const data = await getCustomerHistoryForRep(customer.id);
+      setHistory(data);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handlePing = async (order) => {
+    setPingingId(order.id);
+    try {
+      await pingCustomer(selected.id, order.id);
+      setPingSentId(order.id);
+    } finally {
+      setPingingId(null);
+    }
+  };
+
+  if (loading) return <p className="text-navy-900/60">Loading…</p>;
+
+  if (selected) {
+    return (
+      <div>
+        <button
+          onClick={() => { setSelected(null); setHistory(null); }}
+          className="text-sm text-navy-900/60 hover:text-navy-900 mb-4"
+        >
+          ← Back to customers
+        </button>
+        <h3 className="font-display font-bold text-navy-900 mb-1">
+          {selected.business_name || selected.full_name}
+        </h3>
+        <p className="text-xs text-navy-900/50 mb-5">
+          {selected.full_name} · {selected.phone}
+          {!selected.currently_assigned && " · No longer assigned to you — showing fully-paid orders only"}
+        </p>
+
+        {historyLoading ? (
+          <p className="text-navy-900/60">Loading…</p>
+        ) : !history?.orders?.length ? (
+          <p className="text-navy-900/60">No orders to show.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {history.orders.map((o) => {
+              const band = getPaymentBand(o.payment_percent);
+              const styles = getPaymentBandStyles(band);
+              const remaining = Math.max(0, Number(o.total_amount) - Number(o.paid_amount));
+              return (
+                <div key={o.id} className="bg-white rounded-card shadow-card p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-navy-900">{o.order_number}</p>
+                      <p className="text-xs text-navy-900/50">{new Date(o.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${styles.bg} ${styles.text}`}>
+                      {Math.round(o.payment_percent)}% paid
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-navy-900/10 flex items-center justify-between gap-4">
+                    <div className="text-xs text-navy-900/60">
+                      <p>Paid: ₦{Number(o.paid_amount).toLocaleString()}</p>
+                      <p>Remaining: ₦{remaining.toLocaleString()}</p>
+                    </div>
+                    {o.payment_percent < 100 && (
+                      <button
+                        onClick={() => handlePing(o)}
+                        disabled={pinging === o.id}
+                        className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {pinging === o.id ? "Sending…" : pingSent === o.id ? "Sent ✓" : "Ping"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return customers.length === 0 ? (
+    <p className="text-navy-900/60">No customers to track yet.</p>
+  ) : (
+    <div className="flex flex-col gap-3">
+      {customers.map((c) => (
+        <button
+          key={c.id}
+          onClick={() => openCustomer(c)}
+          className="bg-white rounded-card shadow-card p-4 flex items-center justify-between gap-4 text-left w-full hover:shadow-md transition-shadow"
+        >
+          <div>
+            <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
+            <p className="text-xs text-navy-900/50">{c.full_name} · {c.phone}</p>
+          </div>
+          {!c.currently_assigned && (
+            <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/60 whitespace-nowrap">
+              No longer assigned
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // For customers without an Android phone / who can't self-register — the
 // sales rep fills out the exact same fields on their behalf. Auto-assigned
 // straight to this rep, no location required (the rep may not be able to
@@ -306,7 +443,7 @@ function RegisterCustomerForRep({ onRegistered }) {
         yourself.
       </p>
       <input required placeholder="Full name" value={form.fullName} onChange={update("fullName")} className="input" />
-      <input required type="email" placeholder="Email" value={form.email} onChange={update("email")} className="input" />
+      <input type="email" placeholder="Email (optional)" value={form.email} onChange={update("email")} className="input" />
       <input required placeholder="Phone" value={form.phone} onChange={update("phone")} className="input" />
       <input required placeholder="Business name" value={form.businessName} onChange={update("businessName")} className="input" />
       <select value={form.customerType} onChange={update("customerType")} className="input">
@@ -381,7 +518,7 @@ function SalesRepDashboard({ user, roleLabel }) {
       <p className="text-navy-900/60 text-sm mb-6">{roleLabel} dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
-        {["route", "orders", "referral", "place-order", "register-customer", "expiring"].map((t) => (
+        {["route", "orders", "referral", "place-order", "register-customer", "track-record", "expiring"].map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setPlaceOrderMode(null); }}
@@ -401,6 +538,8 @@ function SalesRepDashboard({ user, roleLabel }) {
               ? "Place Order"
               : t === "register-customer"
               ? "Register Customer"
+              : t === "track-record"
+              ? "Track Record"
               : "Expiring Batches"}
           </button>
         ))}
@@ -528,6 +667,8 @@ function SalesRepDashboard({ user, roleLabel }) {
         )
       ) : tab === "register-customer" ? (
         <RegisterCustomerForRep onRegistered={refreshCustomers} />
+      ) : tab === "track-record" ? (
+        <TrackRecordTab />
       ) : tab === "expiring" ? (
         <ExpiringBatchesList />
       ) : (
