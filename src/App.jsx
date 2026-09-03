@@ -6,6 +6,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SiteVisitRemindersPopup from "./components/SiteVisitRemindersPopup";
 import LocationConsentGate from "./components/LocationConsentGate";
 import AddressPromptPopup from "./components/AddressPromptPopup";
+import CookieConsentPopup from "./components/CookieConsentPopup";
+import InstallPromptPopup from "./components/InstallPromptPopup";
 
 // Lazy-loaded per route so heavy page-specific dependencies (three.js on
 // Home, jspdf on the dashboards, leaflet on AdminMap) only ship to visitors
@@ -35,6 +37,8 @@ export default function App() {
       <SiteVisitRemindersPopup />
       <LocationConsentGate />
       <AddressPromptPopup />
+      <CookieConsentPopup />
+      <InstallPromptPopup />
       <main className="flex-1">
         <Suspense fallback={<RouteFallback />}>
         <Routes>
