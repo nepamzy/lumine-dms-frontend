@@ -117,6 +117,21 @@ export async function listTrash() {
   return data.data;
 }
 
+export async function restoreUser(userId) {
+  const { data } = await api.patch(`/admin/distributors/trash/${userId}/restore`);
+  return data;
+}
+
+export async function listDeletedOrders() {
+  const { data } = await api.get("/orders/trash");
+  return data.data;
+}
+
+export async function restoreOrder(orderId) {
+  const { data } = await api.patch(`/orders/${orderId}/restore`);
+  return data;
+}
+
 export async function getDistributorHistory(distributorId) {
   const { data } = await api.get(`/admin/distributors/${distributorId}/history`);
   return data.data;
