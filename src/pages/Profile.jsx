@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useId, cloneElement } from "react";
 import { useAuth } from "../context/AuthContext";
 import { updateProfile, changePassword } from "../api/auth";
 
@@ -144,10 +144,13 @@ export default function Profile() {
 }
 
 function Field({ label, children }) {
+  const id = useId();
   return (
     <div>
-      <label className="text-xs font-semibold text-navy-900/70 block mb-1">{label}</label>
-      {children}
+      <label htmlFor={id} className="text-xs font-semibold text-navy-900/70 block mb-1">
+        {label}
+      </label>
+      {cloneElement(children, { id })}
     </div>
   );
 }

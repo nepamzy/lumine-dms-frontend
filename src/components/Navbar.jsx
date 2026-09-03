@@ -69,7 +69,7 @@ export default function Navbar() {
               {user.role === "customer" ? "My Orders" : "Dashboard"}
             </Link>
           )}
-          {user && (user.role === "customer" || user.role === "distributor") && (
+          {user && (
             <Link to="/profile" className="hover:text-gold-500 transition-colors py-1">
               Profile
             </Link>

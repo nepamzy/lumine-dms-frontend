@@ -68,7 +68,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
           <h3 className="font-display font-bold text-lg text-navy-900">
             {loading ? "Loading…" : data?.profile?.business_name || data?.profile?.full_name}
           </h3>
-          <button onClick={onClose} className="text-navy-900/40 hover:text-navy-900 text-xl leading-none">
+          <button onClick={onClose} aria-label="Close" className="text-navy-900/40 hover:text-navy-900 text-xl leading-none">
             ×
           </button>
         </div>
