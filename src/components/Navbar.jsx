@@ -29,9 +29,7 @@ export default function Navbar() {
     <nav className="bg-navy-800 text-cream-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-y-2">
         <Link to="/" className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full border-2 border-gold-500 flex items-center justify-center font-display font-extrabold text-gold-500 text-sm">
-            L
-          </span>
+          <img src="/logo.png" alt="Lumine" className="w-10 h-10 object-contain" />
           <span className="font-display font-bold tracking-wide text-sm">LUMINE</span>
         </Link>
 
