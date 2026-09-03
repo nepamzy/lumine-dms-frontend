@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Seo from "../components/Seo";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -27,13 +28,17 @@ export default function Login() {
 
   return (
     <div className="max-w-sm mx-auto px-6 py-16">
+      <Seo title="Login" description="Sign in to your Lumine account." path="/login" />
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Welcome back</h1>
       <p className="text-navy-900/60 text-sm mb-8">Sign in to your Lumine account.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="text-xs font-semibold text-navy-900/70 block mb-1">Email</label>
+          <label htmlFor="login-email" className="text-xs font-semibold text-navy-900/70 block mb-1">
+            Email
+          </label>
           <input
+            id="login-email"
             type="email"
             required
             value={email}
@@ -42,8 +47,11 @@ export default function Login() {
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy-900/70 block mb-1">Password</label>
+          <label htmlFor="login-password" className="text-xs font-semibold text-navy-900/70 block mb-1">
+            Password
+          </label>
           <input
+            id="login-password"
             type="password"
             required
             value={password}

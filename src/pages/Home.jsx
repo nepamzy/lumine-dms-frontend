@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useRef, useState } from "react";
 import FAQ from "../components/FAQ";
 import AdminLoginModal from "../components/AdminLoginModal";
+import Seo from "../components/Seo";
 import fullcream1L from "../assets/fullcream-1L.png";
 import fullcream50cl from "../assets/fullcream-50cl.png";
 import fullcream35cl from "../assets/fullcream-35cl.png";
@@ -62,6 +63,11 @@ export default function Home() {
 
   return (
     <div className="bg-cream-50">
+      <Seo
+        title="Home"
+        description="Lumine yoghurt from Bonchris Industry Nig. Ltd, Kaduna — Full Cream, Lite, and Sugar-Free, in 35cl, 50cl, and 1L packs. Order online with nationwide distributor delivery."
+        path="/"
+      />
       {/* Hero */}
       <section
         className="relative overflow-hidden text-cream-50"
@@ -121,6 +127,7 @@ export default function Home() {
                     <img
                       src={s.image}
                       alt={`Lumine ${f.name} ${s.label}`}
+                      loading="lazy"
                       className={
                         s.label === "1 Litre"
                           ? "h-32 md:h-36 object-contain drop-shadow-sm"

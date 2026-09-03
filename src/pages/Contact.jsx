@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sendContactMessage } from "../api/contact";
+import Seo from "../components/Seo";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -29,6 +30,11 @@ export default function Contact() {
 
   return (
     <div className="bg-cream-50">
+      <Seo
+        title="Contact"
+        description="Get in touch with Lumine / Bonchris Industry Nig. Ltd — questions about orders, distribution, or partnerships."
+        path="/contact"
+      />
       <section className="text-center px-6 pt-16 pb-10 max-w-2xl mx-auto">
         <h1 className="font-display font-bold text-3xl md:text-4xl text-navy-900 mb-3">
           Contact Us
@@ -80,10 +86,11 @@ export default function Contact() {
         >
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-semibold text-navy-900 mb-1">
+              <label htmlFor="contact-name" className="block text-sm font-semibold text-navy-900 mb-1">
                 Name <span className="text-status-danger">*</span>
               </label>
               <input
+                id="contact-name"
                 type="text"
                 name="name"
                 required
@@ -93,10 +100,11 @@ export default function Contact() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-navy-900 mb-1">
+              <label htmlFor="contact-email" className="block text-sm font-semibold text-navy-900 mb-1">
                 Email <span className="text-status-danger">*</span>
               </label>
               <input
+                id="contact-email"
                 type="email"
                 name="email"
                 required
@@ -106,8 +114,11 @@ export default function Contact() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-navy-900 mb-1">Phone</label>
+              <label htmlFor="contact-phone" className="block text-sm font-semibold text-navy-900 mb-1">
+                Phone
+              </label>
               <input
+                id="contact-phone"
                 type="tel"
                 name="phone"
                 value={form.phone}
@@ -116,10 +127,11 @@ export default function Contact() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-navy-900 mb-1">
+              <label htmlFor="contact-subject" className="block text-sm font-semibold text-navy-900 mb-1">
                 Subject <span className="text-status-danger">*</span>
               </label>
               <input
+                id="contact-subject"
                 type="text"
                 name="subject"
                 required
@@ -131,10 +143,11 @@ export default function Contact() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-sm font-semibold text-navy-900 mb-1">
+            <label htmlFor="contact-message" className="block text-sm font-semibold text-navy-900 mb-1">
               Message <span className="text-status-danger">*</span>
             </label>
             <textarea
+              id="contact-message"
               name="message"
               required
               rows={5}

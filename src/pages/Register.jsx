@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useId, cloneElement } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import STATE_LGAS from "../data/nigeria-states-lgas.json";
+import Seo from "../components/Seo";
 
 const NIGERIAN_STATES = Object.keys(STATE_LGAS);
 
@@ -93,6 +94,11 @@ export default function Register() {
 
   return (
     <div className="max-w-md mx-auto px-6 py-16">
+      <Seo
+        title="Register"
+        description="Create a Lumine account as a customer, distributor, or sales rep."
+        path="/register"
+      />
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Create your account</h1>
       <p className="text-navy-900/60 text-sm mb-6">
         Join Lumine as a customer, sales rep, or distributor.
@@ -219,10 +225,13 @@ export default function Register() {
 }
 
 function Field({ label, children }) {
+  const id = useId();
   return (
     <div>
-      <label className="text-xs font-semibold text-navy-900/70 block mb-1">{label}</label>
-      {children}
+      <label htmlFor={id} className="text-xs font-semibold text-navy-900/70 block mb-1">
+        {label}
+      </label>
+      {cloneElement(children, { id })}
     </div>
   );
 }

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /distributor
+Disallow: /account
+Disallow: /profile
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+
+Sitemap: https://www.lummine.site/sitemap.xml

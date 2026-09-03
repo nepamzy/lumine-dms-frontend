@@ -1,3 +1,5 @@
+import Seo from "../components/Seo";
+
 const VALUES = [
   {
     icon: "♥",
@@ -24,6 +26,11 @@ const VALUES = [
 export default function About() {
   return (
     <div className="bg-cream-50">
+      <Seo
+        title="About"
+        description="Learn about Lumine and Bonchris Industry Nig. Ltd — quality yoghurt, transparent pricing, and a reliable distribution network across Nigeria."
+        path="/about"
+      />
       {/* Hero */}
       <section
         className="relative overflow-hidden text-cream-50"
