@@ -95,6 +95,7 @@ export default function ProductCard({ product, onAdd }) {
             src={getProductImage(product.name, selectedSize)}
             alt={`${product.name} ${selectedSize}`}
             className="h-full object-contain"
+            loading="lazy"
           />
         ) : (
           <div

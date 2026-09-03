@@ -1,24 +1,32 @@
+import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-import Home from "./pages/Home";
-import About from "./pages/About";
-import Catalog from "./pages/Catalog";
-import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import OrderDetail from "./pages/OrderDetail";
 import SiteVisitRemindersPopup from "./components/SiteVisitRemindersPopup";
 import LocationConsentGate from "./components/LocationConsentGate";
 import AddressPromptPopup from "./components/AddressPromptPopup";
-import CustomerDashboard from "./pages/CustomerDashboard";
-import DistributorDashboard from "./pages/DistributorDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Profile from "./pages/Profile";
+
+// Lazy-loaded per route so heavy page-specific dependencies (three.js on
+// Home, jspdf on the dashboards, leaflet on AdminMap) only ship to visitors
+// who actually land on those routes, instead of bloating every page's load.
+const Home = lazy(() => import("./pages/Home"));
+const About = lazy(() => import("./pages/About"));
+const Catalog = lazy(() => import("./pages/Catalog"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
+const DistributorDashboard = lazy(() => import("./pages/DistributorDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+
+function RouteFallback() {
+  return <div className="text-center py-24 text-navy-900/60">Loading…</div>;
+}
 
 export default function App() {
   return (
@@ -28,6 +36,7 @@ export default function App() {
       <LocationConsentGate />
       <AddressPromptPopup />
       <main className="flex-1">
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -72,7 +81,7 @@ export default function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute allowedRoles={["customer", "distributor"]}>
+              <ProtectedRoute allowedRoles={["customer", "distributor", "admin"]}>
                 <Profile />
               </ProtectedRoute>
             }
@@ -96,6 +105,7 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>
