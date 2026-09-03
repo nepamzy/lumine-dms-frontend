@@ -26,8 +26,14 @@ const DistributorDashboard = lazy(() => import("./pages/DistributorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 
+// min-h-screen matters here, not just cosmetics — without it, the swap from
+// this fallback to a route's real (much taller) content yanks the Footer
+// down by thousands of pixels the instant the lazy chunk resolves, which is
+// exactly the kind of large, sudden shift CLS penalizes hardest. A full
+// per-route skeleton would fix this more precisely, but a tall neutral
+// fallback removes the worst of the jump for a fraction of the effort.
 function RouteFallback() {
-  return <div className="text-center py-24 text-navy-900/60">Loading…</div>;
+  return <div className="min-h-screen text-center py-24 text-navy-900/60">Loading…</div>;
 }
 
 export default function App() {
