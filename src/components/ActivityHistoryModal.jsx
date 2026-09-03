@@ -6,7 +6,7 @@ import { packLabelFor } from "../utils/packSizes";
 function PaymentBadge({ percent }) {
   const style =
     percent >= 100
-      ? "bg-green-500/15 text-green-500"
+      ? "bg-green-500/15 text-green-700"
       : percent >= 70
       ? "bg-gold-500/20 text-gold-700"
       : "bg-red-500/15 text-red-500";
@@ -21,7 +21,7 @@ function StatCard({ label, value }) {
   return (
     <div className="bg-navy-900/[0.03] rounded-md px-4 py-3 text-center">
       <p className="font-display font-extrabold text-xl text-navy-900">{value}</p>
-      <p className="text-[11px] text-navy-900/50 mt-0.5">{label}</p>
+      <p className="text-[11px] text-navy-900/70 mt-0.5">{label}</p>
     </div>
   );
 }
@@ -74,7 +74,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
         </div>
 
         {loading || !data ? (
-          <p className="px-6 py-10 text-center text-navy-900/50">Loading activity history…</p>
+          <p className="px-6 py-10 text-center text-navy-900/70">Loading activity history…</p>
         ) : (
           <div className="px-6 py-5">
             {/* Profile summary */}
@@ -145,9 +145,9 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
               <div>
                 <h4 className="font-display font-bold text-navy-900 mb-3">Customers</h4>
                 {customersLoading ? (
-                  <p className="text-sm text-navy-900/50">Loading customers…</p>
+                  <p className="text-sm text-navy-900/70">Loading customers…</p>
                 ) : !customers || customers.length === 0 ? (
-                  <p className="text-sm text-navy-900/50">No customers assigned to this sales rep yet.</p>
+                  <p className="text-sm text-navy-900/70">No customers assigned to this sales rep yet.</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {customers.map((c) => (
@@ -180,7 +180,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
             {/* Orders list */}
             <h4 className="font-display font-bold text-navy-900 mb-3">Order history</h4>
             {data.orders.length === 0 ? (
-              <p className="text-sm text-navy-900/50">No orders yet.</p>
+              <p className="text-sm text-navy-900/70">No orders yet.</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {data.orders.map((o) => (
@@ -197,8 +197,8 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                         <span
                           className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${
                             o.payment_percent >= 100
-                              ? "bg-green-500/15 text-green-500"
-                              : "bg-navy-900/10 text-navy-900/60"
+                              ? "bg-green-500/15 text-green-700"
+                              : "bg-navy-900/10 text-navy-900/70"
                           }`}
                         >
                           {o.payment_percent >= 100 ? "Complete" : "Pending"}
@@ -207,7 +207,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                       </div>
                     </div>
 
-                    <ul className="text-xs text-navy-900/60 mb-2">
+                    <ul className="text-xs text-navy-900/70 mb-2">
                       {o.items.map((item, idx) => (
                         <li key={idx}>
                           {item.size ? packLabelFor(item.quantity, item.size) : item.quantity} × {item.productName}{item.size ? ` (${item.size})` : ""} — ₦{Number(item.lineTotal).toLocaleString()}

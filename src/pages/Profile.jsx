@@ -62,7 +62,7 @@ export default function Profile() {
   return (
     <div className="max-w-lg mx-auto px-6 py-12">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">My Profile</h1>
-      <p className="text-navy-900/60 text-sm mb-8">
+      <p className="text-navy-900/70 text-sm mb-8">
         {user.role === "admin"
           ? "Admin account"
           : user.role === "distributor"
@@ -93,7 +93,7 @@ export default function Profile() {
         </Field>
 
         {infoError && <p className="text-status-danger text-sm">{infoError}</p>}
-        {infoSuccess && <p className="text-green-500 text-sm">{infoSuccess}</p>}
+        {infoSuccess && <p className="text-green-700 text-sm">{infoSuccess}</p>}
 
         <button
           type="submit"
@@ -129,7 +129,7 @@ export default function Profile() {
         </Field>
 
         {passwordError && <p className="text-status-danger text-sm">{passwordError}</p>}
-        {passwordSuccess && <p className="text-green-500 text-sm">{passwordSuccess}</p>}
+        {passwordSuccess && <p className="text-green-700 text-sm">{passwordSuccess}</p>}
 
         <button
           type="submit"

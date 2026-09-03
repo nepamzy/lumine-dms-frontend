@@ -31,7 +31,7 @@ export default function Cart() {
     return (
       <div className="max-w-xl mx-auto px-6 py-20 text-center">
         <h1 className="font-display font-bold text-xl text-navy-900 mb-2">Your cart is empty</h1>
-        <p className="text-navy-900/60 text-sm mb-6">Add a few flavours from the catalog to get started.</p>
+        <p className="text-navy-900/70 text-sm mb-6">Add a few flavours from the catalog to get started.</p>
         <Link to="/catalog" className="bg-navy-800 text-cream-50 font-bold text-sm px-6 py-3 rounded-md">
           Browse Catalog
         </Link>

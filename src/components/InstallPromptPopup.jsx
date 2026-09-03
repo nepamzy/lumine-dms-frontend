@@ -85,7 +85,7 @@ export default function InstallPromptPopup() {
         ) : (
           <>
             <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Install Lumine</h2>
-            <p className="text-sm text-navy-900/60 mb-5">
+            <p className="text-sm text-navy-900/70 mb-5">
               Add Lumine to your phone or computer for quick access, straight from your home screen — no browser tab
               to find.
             </p>

@@ -29,7 +29,7 @@ const CUSTOMER_TYPES = [
 const STATUS_COLORS = {
   assigned: "bg-gold-500/20 text-gold-700",
   in_transit: "bg-navy-700/15 text-navy-700",
-  delivered: "bg-green-500/15 text-green-500",
+  delivered: "bg-green-500/15 text-green-700",
   failed: "bg-status-danger/15 text-status-danger",
 };
 
@@ -75,7 +75,7 @@ function DeliveryCard({ delivery, onDelivered, onFailed }) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-display font-bold text-navy-900">{delivery.order_number}</p>
-          <p className="text-sm text-navy-900/60 mt-0.5">₦{Number(delivery.total_amount).toLocaleString()}</p>
+          <p className="text-sm text-navy-900/70 mt-0.5">₦{Number(delivery.total_amount).toLocaleString()}</p>
         </div>
         <span className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${STATUS_COLORS[delivery.gps_status]}`}>
           {delivery.gps_status.replace(/_/g, " ")}
@@ -175,17 +175,17 @@ function DistributorSimpleDashboard({ user }) {
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">
         Welcome, {user?.full_name?.split(" ")[0]}
       </h1>
-      <p className="text-navy-900/60 text-sm mb-8">Distributor dashboard</p>
+      <p className="text-navy-900/70 text-sm mb-8">Distributor dashboard</p>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : (
         <div className="flex flex-col gap-5">
           <div className="bg-white rounded-card shadow-card p-6">
             <h3 className="font-display font-bold text-navy-900 mb-1">
               Bring in other distributors
             </h3>
-            <p className="text-sm text-navy-900/60 mb-4">
+            <p className="text-sm text-navy-900/70 mb-4">
               Share this link with other distributors. Anyone who signs up through it
               counts toward your total below — you won't manage them directly, this is
               purely for tracking.
@@ -210,13 +210,13 @@ function DistributorSimpleDashboard({ user }) {
             <p className="font-display font-extrabold text-3xl text-navy-900">
               {referral?.referredCount ?? "—"}
             </p>
-            <p className="text-sm text-navy-900/55 mt-1">Distributors referred by you</p>
+            <p className="text-sm text-navy-900/70 mt-1">Distributors referred by you</p>
           </div>
 
           <div>
             <h3 className="font-display font-bold text-navy-900 mb-3">Your orders</h3>
             {orders.length === 0 ? (
-              <div className="bg-navy-900/[0.03] rounded-card p-5 text-sm text-navy-900/60">
+              <div className="bg-navy-900/[0.03] rounded-card p-5 text-sm text-navy-900/70">
                 No orders yet. Use the Catalog and Cart to place one.
               </div>
             ) : (
@@ -232,7 +232,7 @@ function DistributorSimpleDashboard({ user }) {
                     >
                       <div>
                         <p className="font-semibold text-navy-900">{order.order_number}</p>
-                        <p className="text-xs text-navy-900/50">
+                        <p className="text-xs text-navy-900/70">
                           {new Date(order.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -302,29 +302,29 @@ function TrackRecordTab() {
     }
   };
 
-  if (loading) return <p className="text-navy-900/60">Loading…</p>;
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
 
   if (selected) {
     return (
       <div>
         <button
           onClick={() => { setSelected(null); setHistory(null); }}
-          className="text-sm text-navy-900/60 hover:text-navy-900 mb-4"
+          className="text-sm text-navy-900/70 hover:text-navy-900 mb-4"
         >
           ← Back to customers
         </button>
         <h3 className="font-display font-bold text-navy-900 mb-1">
           {selected.business_name || selected.full_name}
         </h3>
-        <p className="text-xs text-navy-900/50 mb-5">
+        <p className="text-xs text-navy-900/70 mb-5">
           {selected.full_name} · {selected.phone}
           {!selected.currently_assigned && " · No longer assigned to you — showing fully-paid orders only"}
         </p>
 
         {historyLoading ? (
-          <p className="text-navy-900/60">Loading…</p>
+          <p className="text-navy-900/70">Loading…</p>
         ) : !history?.orders?.length ? (
-          <p className="text-navy-900/60">No orders to show.</p>
+          <p className="text-navy-900/70">No orders to show.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {history.orders.map((o) => {
@@ -336,14 +336,14 @@ function TrackRecordTab() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="font-semibold text-navy-900">{o.order_number}</p>
-                      <p className="text-xs text-navy-900/50">{new Date(o.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-navy-900/70">{new Date(o.created_at).toLocaleDateString()}</p>
                     </div>
                     <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${styles.bg} ${styles.text}`}>
                       {Math.round(o.payment_percent)}% paid
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-navy-900/10 flex items-center justify-between gap-4">
-                    <div className="text-xs text-navy-900/60">
+                    <div className="text-xs text-navy-900/70">
                       <p>Paid: ₦{Number(o.paid_amount).toLocaleString()}</p>
                       <p>Remaining: ₦{remaining.toLocaleString()}</p>
                     </div>
@@ -367,7 +367,7 @@ function TrackRecordTab() {
   }
 
   return customers.length === 0 ? (
-    <p className="text-navy-900/60">No customers to track yet.</p>
+    <p className="text-navy-900/70">No customers to track yet.</p>
   ) : (
     <div className="flex flex-col gap-3">
       {customers.map((c) => (
@@ -378,10 +378,10 @@ function TrackRecordTab() {
         >
           <div>
             <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
-            <p className="text-xs text-navy-900/50">{c.full_name} · {c.phone}</p>
+            <p className="text-xs text-navy-900/70">{c.full_name} · {c.phone}</p>
           </div>
           {!c.currently_assigned && (
-            <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/60 whitespace-nowrap">
+            <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/70 whitespace-nowrap">
               No longer assigned
             </span>
           )}
@@ -436,7 +436,7 @@ function RegisterCustomerForRep({ onRegistered }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-card shadow-card p-6 flex flex-col gap-4 max-w-lg">
-      <p className="text-sm text-navy-900/60">
+      <p className="text-sm text-navy-900/70">
         For customers who don't have an Android phone (or can't sign up themselves) — this just
         saves their details to your customer book. They won't get a login of their own; when
         they're ready to buy, place it as your own order (Place Order → Self) and pay for it
@@ -515,7 +515,7 @@ function SalesRepDashboard({ user, roleLabel }) {
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">
         Welcome, {user?.full_name?.split(" ")[0]}
       </h1>
-      <p className="text-navy-900/60 text-sm mb-6">{roleLabel} dashboard</p>
+      <p className="text-navy-900/70 text-sm mb-6">{roleLabel} dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
         {["route", "orders", "referral", "place-order", "register-customer", "track-record", "expiring"].map((t) => (
@@ -525,7 +525,7 @@ function SalesRepDashboard({ user, roleLabel }) {
             className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               tab === t
                 ? "border-gold-500 text-navy-900"
-                : "border-transparent text-navy-900/50 hover:text-navy-900"
+                : "border-transparent text-navy-900/70 hover:text-navy-900"
             }`}
           >
             {t === "route"
@@ -546,10 +546,10 @@ function SalesRepDashboard({ user, roleLabel }) {
       </div>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : tab === "route" ? (
         route.length === 0 ? (
-          <div className="text-center py-16 text-navy-900/50 text-sm">
+          <div className="text-center py-16 text-navy-900/70 text-sm">
             No active deliveries assigned to you right now.
           </div>
         ) : (
@@ -568,7 +568,7 @@ function SalesRepDashboard({ user, roleLabel }) {
         <div className="flex flex-col gap-5">
           <div className="bg-white rounded-card shadow-card p-6">
             <h3 className="font-display font-bold text-navy-900 mb-1">Your referral link</h3>
-            <p className="text-sm text-navy-900/60 mb-4">
+            <p className="text-sm text-navy-900/70 mb-4">
               Share this link with new customers. Anyone who signs up through it is
               automatically linked to your account.
             </p>
@@ -593,13 +593,13 @@ function SalesRepDashboard({ user, roleLabel }) {
               <p className="font-display font-extrabold text-3xl text-navy-900">
                 {referral?.referredCount ?? "—"}
               </p>
-              <p className="text-sm text-navy-900/55 mt-1">Referred customers</p>
+              <p className="text-sm text-navy-900/70 mt-1">Referred customers</p>
             </div>
             <div className="bg-white rounded-card shadow-card p-5 text-center">
               <p className="font-display font-extrabold text-3xl text-navy-900">
                 {referral?.assignedCount ?? "—"}
               </p>
-              <p className="text-sm text-navy-900/55 mt-1">Currently assigned to you</p>
+              <p className="text-sm text-navy-900/70 mt-1">Currently assigned to you</p>
             </div>
           </div>
 
@@ -617,7 +617,7 @@ function SalesRepDashboard({ user, roleLabel }) {
               className="flex-1 bg-white rounded-card shadow-card p-6 text-left hover:shadow-md transition-shadow"
             >
               <p className="font-display font-bold text-navy-900 mb-1">Order for a Customer</p>
-              <p className="text-xs text-navy-900/50">
+              <p className="text-xs text-navy-900/70">
                 Pick from your customers who have their own account, and order on their behalf.
               </p>
             </button>
@@ -626,7 +626,7 @@ function SalesRepDashboard({ user, roleLabel }) {
               className="flex-1 bg-white rounded-card shadow-card p-6 text-left hover:shadow-md transition-shadow"
             >
               <p className="font-display font-bold text-navy-900 mb-1">Order for Myself</p>
-              <p className="text-xs text-navy-900/50">
+              <p className="text-xs text-navy-900/70">
                 Your own order — paid 100% upfront, no partial payments, capped at 5 packs total.
               </p>
             </button>
@@ -640,7 +640,7 @@ function SalesRepDashboard({ user, roleLabel }) {
               ← Back
             </button>
             {myCustomers.length === 0 ? (
-              <p className="text-navy-900/60 text-sm">
+              <p className="text-navy-900/70 text-sm">
                 No customers assigned to you yet. Share your referral link to bring some in.
               </p>
             ) : (
@@ -648,7 +648,7 @@ function SalesRepDashboard({ user, roleLabel }) {
                 <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
-                    <p className="text-xs text-navy-900/50">{c.full_name} · {c.email}</p>
+                    <p className="text-xs text-navy-900/70">{c.full_name} · {c.email}</p>
                   </div>
                   <button
                     onClick={() =>
@@ -677,11 +677,11 @@ function SalesRepDashboard({ user, roleLabel }) {
             <div key={o.id} className="bg-white rounded-card shadow-card p-4 flex justify-between items-center">
               <div>
                 <p className="font-semibold text-navy-900">{o.order_number}</p>
-                <p className="text-xs text-navy-900/50">{new Date(o.created_at).toLocaleDateString()}</p>
+                <p className="text-xs text-navy-900/70">{new Date(o.created_at).toLocaleDateString()}</p>
               </div>
               <div className="text-right">
                 <p className="font-semibold text-navy-800">₦{Number(o.total_amount).toLocaleString()}</p>
-                <p className="text-xs text-navy-900/50">{o.status.replace(/_/g, " ")}</p>
+                <p className="text-xs text-navy-900/70">{o.status.replace(/_/g, " ")}</p>
               </div>
             </div>
           ))}

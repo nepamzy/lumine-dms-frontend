@@ -43,7 +43,7 @@ export default function CookieConsentPopup() {
         <div className="flex gap-2 shrink-0">
           <button
             onClick={() => decide("denied")}
-            className="text-sm font-semibold text-navy-900/60 hover:text-navy-900 px-4 py-2.5 rounded-md transition-colors whitespace-nowrap"
+            className="text-sm font-semibold text-navy-900/70 hover:text-navy-900 px-4 py-2.5 rounded-md transition-colors whitespace-nowrap"
           >
             Deny
           </button>

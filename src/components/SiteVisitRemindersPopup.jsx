@@ -64,7 +64,7 @@ export default function SiteVisitRemindersPopup() {
         <div className="flex gap-2">
           <button
             onClick={() => setDismissed(true)}
-            className="flex-1 text-navy-900/60 text-sm font-semibold py-2.5 rounded-md border border-navy-900/15"
+            className="flex-1 text-navy-900/70 text-sm font-semibold py-2.5 rounded-md border border-navy-900/15"
           >
             Dismiss
           </button>

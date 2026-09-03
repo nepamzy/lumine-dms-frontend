@@ -100,7 +100,7 @@ export default function Register() {
         path="/register"
       />
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Create your account</h1>
-      <p className="text-navy-900/60 text-sm mb-6">
+      <p className="text-navy-900/70 text-sm mb-6">
         Join Lumine as a customer, sales rep, or distributor.
       </p>
 
@@ -124,7 +124,7 @@ export default function Register() {
             className={`flex-1 text-sm font-semibold py-2.5 rounded-md border transition-colors ${
               kind === k.value
                 ? "bg-navy-800 text-cream-50 border-navy-800"
-                : "bg-white text-navy-900/60 border-navy-900/15"
+                : "bg-white text-navy-900/70 border-navy-900/15"
             }`}
           >
             {k.label}
@@ -197,7 +197,7 @@ export default function Register() {
         )}
 
         {kind !== "customer" && (
-          <p className="text-xs text-navy-900/50 bg-navy-900/5 rounded-md p-3">
+          <p className="text-xs text-navy-900/70 bg-navy-900/5 rounded-md p-3">
             {kind === "distributor" ? "Distributor" : "Sales rep"} accounts require admin approval before you can sign in.
           </p>
         )}
@@ -214,7 +214,7 @@ export default function Register() {
         </button>
       </form>
 
-      <p className="text-sm text-navy-900/60 mt-6">
+      <p className="text-sm text-navy-900/70 mt-6">
         Already have an account?{" "}
         <Link to="/login" className="text-navy-800 font-semibold underline">
           Sign in

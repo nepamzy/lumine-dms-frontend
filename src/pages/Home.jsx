@@ -25,7 +25,7 @@ const FLAVORS = [
   },
   {
     name: "Sugar Free",
-    color: "#2E9E44",
+    color: "#257E36",
     sizes: [
       { label: "35cl", image: sugarfree35cl },
       { label: "50cl", image: sugarfree50cl },
@@ -104,11 +104,11 @@ export default function Home() {
 
       {/* Products */}
       <section id="products" className="max-w-4xl mx-auto text-center px-6 pt-16 pb-10">
-        <p className="text-green-500 text-xs font-bold tracking-[3px] mb-3">OUR RANGE</p>
+        <p className="text-green-700 text-xs font-bold tracking-[3px] mb-3">OUR RANGE</p>
         <h2 className="font-display font-extrabold text-3xl md:text-4xl text-navy-900 mb-4">
           3 Delicious Flavours
         </h2>
-        <p className="text-navy-900/60 text-sm md:text-base max-w-md mx-auto mb-10">
+        <p className="text-navy-900/70 text-sm md:text-base max-w-md mx-auto mb-10">
           Full Cream, Sugar Free, and Lite — something for every customer.
         </p>
 
@@ -136,7 +136,7 @@ export default function Home() {
                           : "h-16 md:h-20 object-contain drop-shadow-sm"
                       }
                     />
-                    <span className="text-xs font-semibold text-navy-900/60 mt-2">{s.label}</span>
+                    <span className="text-xs font-semibold text-navy-900/70 mt-2">{s.label}</span>
                   </div>
                 ))}
               </div>
@@ -152,7 +152,7 @@ export default function Home() {
             🛡️
           </div>
           <h3 className="font-display font-bold text-navy-900 mb-1">NAFDAC Certified</h3>
-          <p className="text-sm text-navy-900/55">Fully approved and certified for your safety</p>
+          <p className="text-sm text-navy-900/70">Fully approved and certified for your safety</p>
         </div>
         <div>
           <div
@@ -162,14 +162,14 @@ export default function Home() {
             🏅
           </div>
           <h3 className="font-display font-bold text-navy-900 mb-1">Premium Quality</h3>
-          <p className="text-sm text-navy-900/55">Made from trusted, quality dairy ingredients</p>
+          <p className="text-sm text-navy-900/70">Made from trusted, quality dairy ingredients</p>
         </div>
         <div>
           <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-navy-900/5 flex items-center justify-center text-2xl">
             🚚
           </div>
           <h3 className="font-display font-bold text-navy-900 mb-1">Nationwide Delivery</h3>
-          <p className="text-sm text-navy-900/55">Fresh delivery across all 36 Nigerian states</p>
+          <p className="text-sm text-navy-900/70">Fresh delivery across all 36 Nigerian states</p>
         </div>
       </section>
 
@@ -179,7 +179,7 @@ export default function Home() {
           <h2 className="font-display font-extrabold text-2xl md:text-3xl text-navy-900 mb-2">
             Join Lumine
           </h2>
-          <p className="text-navy-900/55 text-sm mb-10 max-w-md mx-auto">
+          <p className="text-navy-900/70 text-sm mb-10 max-w-md mx-auto">
             However you want to work with us, there's a place for you.
           </p>
           <div className="grid gap-5 sm:grid-cols-3">
@@ -188,7 +188,7 @@ export default function Home() {
               className="bg-white rounded-card shadow-card p-6 hover:shadow-md transition-shadow"
             >
               <h3 className="font-display font-bold text-navy-900 mb-1">Become a Distributor</h3>
-              <p className="text-sm text-navy-900/55">
+              <p className="text-sm text-navy-900/70">
                 Buy at discount, resell in your territory, and refer other distributors.
               </p>
             </Link>
@@ -197,7 +197,7 @@ export default function Home() {
               className="bg-white rounded-card shadow-card p-6 hover:shadow-md transition-shadow"
             >
               <h3 className="font-display font-bold text-navy-900 mb-1">Become a Sales Rep</h3>
-              <p className="text-sm text-navy-900/55">
+              <p className="text-sm text-navy-900/70">
                 Bring in customers, place orders on their behalf, and grow your book.
               </p>
             </Link>
@@ -206,7 +206,7 @@ export default function Home() {
               className="bg-white rounded-card shadow-card p-6 hover:shadow-md transition-shadow"
             >
               <h3 className="font-display font-bold text-navy-900 mb-1">Become a Customer</h3>
-              <p className="text-sm text-navy-900/55">
+              <p className="text-sm text-navy-900/70">
                 Order fresh Lumine yoghurt for your business, delivered to your door.
               </p>
             </Link>

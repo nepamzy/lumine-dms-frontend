@@ -64,7 +64,7 @@ export default function LocationConsentGate() {
           ✕
         </button>
         <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Share your location</h2>
-        <p className="text-sm text-navy-900/60 mb-5">
+        <p className="text-sm text-navy-900/70 mb-5">
           Adding your location helps us serve you better as a {roleLabel}, like assigning nearby deliveries and
           support faster. It's optional — tap the X to skip for now.
         </p>

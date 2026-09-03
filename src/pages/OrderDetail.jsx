@@ -95,8 +95,8 @@ export default function OrderDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <p className="max-w-2xl mx-auto px-6 py-16 text-navy-900/60">Loading…</p>;
-  if (!order) return <p className="max-w-2xl mx-auto px-6 py-16 text-navy-900/60">Order not found.</p>;
+  if (loading) return <p className="max-w-2xl mx-auto px-6 py-16 text-navy-900/70">Loading…</p>;
+  if (!order) return <p className="max-w-2xl mx-auto px-6 py-16 text-navy-900/70">Order not found.</p>;
 
   const isAdmin = user?.role === "admin";
   const isBuyer = order.customer_id === user?.id;
@@ -196,7 +196,7 @@ export default function OrderDetail() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-display font-bold text-2xl text-navy-900">{order.order_number}</h1>
-          <p className="text-navy-900/50 text-sm">
+          <p className="text-navy-900/70 text-sm">
             Placed {new Date(order.created_at).toLocaleDateString()}
           </p>
         </div>
@@ -390,7 +390,7 @@ export default function OrderDetail() {
               <button
                 disabled={busy}
                 onClick={() => setEditing(false)}
-                className="text-xs text-navy-900/50 underline"
+                className="text-xs text-navy-900/70 underline"
               >
                 Discard
               </button>

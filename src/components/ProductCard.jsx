@@ -119,7 +119,7 @@ export default function ProductCard({ product, onAdd }) {
 
       <h3 className="font-display font-bold text-navy-900 mb-1">{product.name}</h3>
 
-      {loading && <p className="text-xs text-navy-900/50 mb-3">Loading sizes…</p>}
+      {loading && <p className="text-xs text-navy-900/70 mb-3">Loading sizes…</p>}
 
       {!loading && variants.length === 0 && (
         <p className="text-xs text-status-danger mb-3">No sizes available yet.</p>

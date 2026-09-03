@@ -5,7 +5,7 @@ import RepRevenueDrilldown from "../../components/RepRevenueDrilldown";
 function StatCard({ label, value, accent }) {
   return (
     <div className="bg-white rounded-card shadow-card p-5">
-      <p className="text-xs font-semibold text-navy-900/50 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xs font-semibold text-navy-900/70 uppercase tracking-wide mb-1">{label}</p>
       <p className={`font-display font-bold text-2xl ${accent || "text-navy-900"}`}>{value}</p>
     </div>
   );
@@ -25,7 +25,7 @@ function LowStockSection({ lowStock }) {
         className="input text-sm mb-3 w-full max-w-xs"
       />
       {visible.length === 0 ? (
-        <p className="text-sm text-navy-900/50">Nothing low on stock right now.</p>
+        <p className="text-sm text-navy-900/70">Nothing low on stock right now.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {visible.map((p) => (
@@ -79,7 +79,7 @@ export default function Overview() {
     };
   }, [repRows]);
 
-  if (loading) return <p className="text-navy-900/60">Loading overview…</p>;
+  if (loading) return <p className="text-navy-900/70">Loading overview…</p>;
   if (error) return <p className="text-status-danger">{error}</p>;
 
   return (
@@ -90,7 +90,7 @@ export default function Overview() {
         <StatCard
           label="Total Revenue"
           value={`₦${Number(sales.summary.total_revenue).toLocaleString()}`}
-          accent="text-green-500"
+          accent="text-green-700"
         />
         <StatCard
           label="Expiring Soon"
@@ -110,13 +110,13 @@ export default function Overview() {
         <StatCard
           label="Sales Rep Revenue"
           value={`₦${salesRepTotals.revenue.toLocaleString()}`}
-          accent="text-green-500"
+          accent="text-green-700"
         />
         <StatCard label="Distributor Orders" value={distributorTotals.orders} />
         <StatCard
           label="Distributor Revenue"
           value={`₦${distributorTotals.revenue.toLocaleString()}`}
-          accent="text-green-500"
+          accent="text-green-700"
         />
       </div>
 

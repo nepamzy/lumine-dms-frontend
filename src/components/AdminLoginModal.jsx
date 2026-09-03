@@ -67,7 +67,7 @@ export default function AdminLoginModal({ onClose }) {
           >
             {submitting ? "Signing in…" : "Sign In"}
           </button>
-          <button type="button" onClick={onClose} className="text-navy-900/50 text-xs">
+          <button type="button" onClick={onClose} className="text-navy-900/70 text-xs">
             Cancel
           </button>
         </form>

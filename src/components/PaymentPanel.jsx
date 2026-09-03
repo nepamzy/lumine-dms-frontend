@@ -10,7 +10,7 @@ const STATUS_LABELS = {
 };
 const STATUS_STYLES = {
   pending: "text-gold-700",
-  successful: "text-green-500",
+  successful: "text-green-700",
   failed: "text-status-danger",
 };
 
@@ -149,11 +149,11 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
 
       {order.payment.payments.length > 0 && (
         <div className="mb-5">
-          <p className="text-xs font-semibold text-navy-900/60 mb-2">Payment history</p>
+          <p className="text-xs font-semibold text-navy-900/70 mb-2">Payment history</p>
           <div className="flex flex-col gap-2">
             {order.payment.payments.map((p) => (
               <div key={p.id} className="flex flex-col gap-0.5 border-b border-navy-900/5 pb-1.5">
-                <div className="flex justify-between items-center text-xs text-navy-900/60">
+                <div className="flex justify-between items-center text-xs text-navy-900/70">
                   <span>
                     {new Date(p.recorded_at).toLocaleDateString()} — {p.recorded_by_name}
                     {" · "}
@@ -181,7 +181,7 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
                   </span>
                 </div>
                 {recheckNote[p.id] && (
-                  <p className="text-[10px] text-navy-900/50 text-right">{recheckNote[p.id]}</p>
+                  <p className="text-[10px] text-navy-900/70 text-right">{recheckNote[p.id]}</p>
                 )}
               </div>
             ))}
@@ -191,7 +191,7 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
 
       {isAdmin && percent < 100 && (
         <form onSubmit={handleManualLog} className="flex flex-col gap-2 pt-3 border-t border-navy-900/10 mt-3">
-          <p className="text-xs font-semibold text-navy-900/60">
+          <p className="text-xs font-semibold text-navy-900/70">
             Admin: authorize payment directly (bypasses Paystack — marks it successful immediately)
           </p>
           <div className="flex gap-2">
@@ -234,7 +234,7 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
       {canPay && percent < 100 && (
         <form onSubmit={handlePay} className="flex flex-col gap-2 pt-3 border-t border-navy-900/10">
           {order.buyerKind === "distributor" && percent < 70 && (
-            <p className="text-xs text-navy-900/50">
+            <p className="text-xs text-navy-900/70">
               Payments must be at least 70% of the order total (₦{minDistributorPayment.toLocaleString()}) unless it's your final top-up.
             </p>
           )}

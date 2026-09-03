@@ -66,9 +66,9 @@ export default function Customers() {
       <h2 className="font-display font-bold text-xl text-navy-900 mb-5">Customers</h2>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : customers.length === 0 ? (
-        <p className="text-navy-900/60">No customers yet.</p>
+        <p className="text-navy-900/70">No customers yet.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {customers.map((c) => (
@@ -84,10 +84,10 @@ export default function Customers() {
                     <span className="text-navy-900/40 font-normal"> (User {Number(c.prior_accounts_count) + 1})</span>
                   )}
                 </p>
-                <p className="text-xs text-navy-900/50">
+                <p className="text-xs text-navy-900/70">
                   {c.full_name} · {c.email} · {c.phone}
                 </p>
-                <p className="text-xs text-navy-900/50">
+                <p className="text-xs text-navy-900/70">
                   {c.delivery_address ? `${c.delivery_address}, ` : ""}
                   <span className="font-semibold">
                     {c.local_government ? `${c.local_government}, ` : ""}
@@ -102,7 +102,7 @@ export default function Customers() {
               </div>
 
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-green-500/15 text-green-500 whitespace-nowrap">
+                <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-green-500/15 text-green-700 whitespace-nowrap">
                   {c.status}
                 </span>
                 <select

@@ -98,7 +98,7 @@ export default function Checkout() {
   return (
     <div className="max-w-xl mx-auto px-6 py-16">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Review & Place Order</h1>
-      <p className="text-navy-900/60 text-sm mb-8">
+      <p className="text-navy-900/70 text-sm mb-8">
         You'll pay after placing your order — from your order page, any time.
       </p>
       {forCustomer && (
@@ -144,7 +144,7 @@ export default function Checkout() {
         <div className="fixed inset-0 bg-navy-900/70 z-[100] flex items-center justify-center p-6">
           <div className="bg-white rounded-card max-w-sm w-full p-6 text-center">
             <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Before you confirm</h2>
-            <p className="text-sm text-navy-900/60 mb-6">
+            <p className="text-sm text-navy-900/70 mb-6">
               You'll receive your product within <span className="font-semibold text-navy-900">5 working days</span> of
               placing this order.
               {!isSalesRepSelfOrder && !forCustomer && (

@@ -30,7 +30,7 @@ const TABS = [
     key: "map",
     label: "Map",
     Component: () => (
-      <Suspense fallback={<p className="text-navy-900/60">Loading map…</p>}>
+      <Suspense fallback={<p className="text-navy-900/70">Loading map…</p>}>
         <AdminMap />
       </Suspense>
     ),
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Admin Dashboard</h1>
-      <p className="text-navy-900/60 text-sm mb-6">Lumine DMS control center — Bonchris Industry Nig. Ltd</p>
+      <p className="text-navy-900/70 text-sm mb-6">Lumine DMS control center — Bonchris Industry Nig. Ltd</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8">
         {TABS.map((tab) => (
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
             className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               activeTab === tab.key
                 ? "border-gold-500 text-navy-900"
-                : "border-transparent text-navy-900/50 hover:text-navy-900"
+                : "border-transparent text-navy-900/70 hover:text-navy-900"
             }`}
           >
             {tab.label}

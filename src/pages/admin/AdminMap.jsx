@@ -98,11 +98,11 @@ export default function AdminMap() {
       </div>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : error ? (
         <p className="text-status-danger">{error}</p>
       ) : total === 0 ? (
-        <p className="text-navy-900/60">
+        <p className="text-navy-900/70">
           No GPS-located accounts yet. Locations are captured automatically the first time
           someone signs up with location permission enabled.
         </p>
@@ -120,8 +120,8 @@ export default function AdminMap() {
                   <Popup>
                     <div className="text-sm">
                       <p className="font-bold text-navy-900">{d.name}</p>
-                      <p className="text-navy-900/60">{d.contactName}</p>
-                      <p className="text-navy-900/60 mt-1">
+                      <p className="text-navy-900/70">{d.contactName}</p>
+                      <p className="text-navy-900/70 mt-1">
                         {d.localGovernment ? `${d.localGovernment}, ` : ""}
                         {d.state}
                       </p>
@@ -139,8 +139,8 @@ export default function AdminMap() {
                   <Popup>
                     <div className="text-sm">
                       <p className="font-bold text-navy-900">{s.name}</p>
-                      <p className="text-navy-900/60">{s.contactName}</p>
-                      <p className="text-navy-900/60 mt-1">
+                      <p className="text-navy-900/70">{s.contactName}</p>
+                      <p className="text-navy-900/70 mt-1">
                         {s.localGovernment ? `${s.localGovernment}, ` : ""}
                         {s.state}
                       </p>
@@ -163,13 +163,13 @@ export default function AdminMap() {
                   <Popup>
                     <div className="text-sm">
                       <p className="font-bold text-navy-900">{c.name}</p>
-                      <p className="text-navy-900/60">{c.contactName}</p>
-                      <p className="text-navy-900/60 mt-1">
+                      <p className="text-navy-900/70">{c.contactName}</p>
+                      <p className="text-navy-900/70 mt-1">
                         {c.localGovernment ? `${c.localGovernment}, ` : ""}
                         {c.state}
                       </p>
                       {c.deliveryAddress && (
-                        <p className="text-navy-900/60">{c.deliveryAddress}</p>
+                        <p className="text-navy-900/70">{c.deliveryAddress}</p>
                       )}
                       <p className="text-[11px] uppercase font-bold tracking-wide mt-1 text-navy-900/40">
                         Customer · {c.customerType || "—"}

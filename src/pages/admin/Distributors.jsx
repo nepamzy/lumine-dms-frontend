@@ -57,9 +57,9 @@ export default function Distributors() {
       </div>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : distributors.length === 0 ? (
-        <p className="text-navy-900/60">Nothing here right now.</p>
+        <p className="text-navy-900/70">Nothing here right now.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {distributors.map((d) => (
@@ -70,7 +70,7 @@ export default function Distributors() {
             >
               <div>
                 <p className="font-semibold text-navy-900">{d.business_name || d.full_name}</p>
-                <p className="text-xs text-navy-900/50">
+                <p className="text-xs text-navy-900/70">
                   {d.full_name} · {d.email} · {d.state}
                   {d.local_government ? ` · ${d.local_government}` : ""}
                 </p>

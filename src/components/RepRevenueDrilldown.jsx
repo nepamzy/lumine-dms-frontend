@@ -84,14 +84,14 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
         <h4 className="font-display font-bold text-navy-900 mb-1">
           {individual.business_name || individual.full_name}
         </h4>
-        <p className="text-xs text-navy-900/50 mb-4">
+        <p className="text-xs text-navy-900/70 mb-4">
           ₦{Number(individual.revenue).toLocaleString()} total · {individual.completed_count} completed ·{" "}
           {individual.pending_count} pending
         </p>
         {ordersLoading ? (
-          <p className="text-navy-900/60 text-sm">Loading orders…</p>
+          <p className="text-navy-900/70 text-sm">Loading orders…</p>
         ) : !orders || orders.length === 0 ? (
-          <p className="text-navy-900/60 text-sm">No orders found.</p>
+          <p className="text-navy-900/70 text-sm">No orders found.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {orders.map((o) => (
@@ -105,7 +105,7 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${
-                      Number(o.payment_percent) >= 100 ? "bg-green-500/15 text-green-500" : "bg-navy-900/10 text-navy-900/60"
+                      Number(o.payment_percent) >= 100 ? "bg-green-500/15 text-green-700" : "bg-navy-900/10 text-navy-900/70"
                     }`}
                   >
                     {Number(o.payment_percent) >= 100 ? "Complete" : "Pending"}
@@ -138,7 +138,7 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
                 key={t}
                 onClick={() => setRepType(t)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                  repType === t ? "bg-navy-800 text-cream-50" : "bg-navy-900/5 text-navy-900/60"
+                  repType === t ? "bg-navy-800 text-cream-50" : "bg-navy-900/5 text-navy-900/70"
                 }`}
               >
                 {t === "sales_rep" ? "Sales Reps" : "Distributors"}
@@ -151,7 +151,7 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
           <>
             <SearchInput value={individualSearch} onChange={setIndividualSearch} placeholder="Search by name…" />
             {visibleIndividuals.length === 0 ? (
-              <p className="text-navy-900/60 text-sm">None found.</p>
+              <p className="text-navy-900/70 text-sm">None found.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {visibleIndividuals.map((i) => (
@@ -173,7 +173,7 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
             )}
           </>
         ) : (
-          <p className="text-navy-900/50 text-sm">Pick Sales Reps or Distributors above.</p>
+          <p className="text-navy-900/70 text-sm">Pick Sales Reps or Distributors above.</p>
         )}
       </div>
     );
@@ -184,7 +184,7 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
     <div>
       <SearchInput value={stateSearch} onChange={setStateSearch} placeholder="Search states…" />
       {visibleStates.length === 0 ? (
-        <p className="text-navy-900/60 text-sm">No revenue recorded yet.</p>
+        <p className="text-navy-900/70 text-sm">No revenue recorded yet.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {visibleStates.map((s) => (

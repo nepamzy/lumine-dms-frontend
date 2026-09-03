@@ -33,7 +33,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 // per-route skeleton would fix this more precisely, but a tall neutral
 // fallback removes the worst of the jump for a fraction of the effort.
 function RouteFallback() {
-  return <div className="min-h-screen text-center py-24 text-navy-900/60">Loading…</div>;
+  return <div className="min-h-screen text-center py-24 text-navy-900/70">Loading…</div>;
 }
 
 export default function App() {

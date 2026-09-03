@@ -32,7 +32,7 @@ export default function FAQ() {
 
   return (
     <section id="faqs" className="max-w-3xl mx-auto px-6 py-16">
-      <p className="text-green-500 text-xs font-bold tracking-[3px] mb-3 text-center">FAQS</p>
+      <p className="text-green-700 text-xs font-bold tracking-[3px] mb-3 text-center">FAQS</p>
       <h2 className="font-display font-extrabold text-3xl md:text-4xl text-navy-900 mb-10 text-center">
         Frequently Asked Questions
       </h2>
@@ -60,7 +60,7 @@ export default function FAQ() {
                 </span>
               </button>
               {isOpen && (
-                <p className="text-sm text-navy-900/60 leading-relaxed pb-5 pr-8">{item.a}</p>
+                <p className="text-sm text-navy-900/70 leading-relaxed pb-5 pr-8">{item.a}</p>
               )}
             </div>
           );

@@ -18,9 +18,9 @@ export default function ExpiringProductBatchesList() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-navy-900/60">Loading…</p>;
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
   if (error) return <p className="text-status-danger">{error}</p>;
-  if (rows.length === 0) return <p className="text-navy-900/60">No batches expiring within the next 30 days.</p>;
+  if (rows.length === 0) return <p className="text-navy-900/70">No batches expiring within the next 30 days.</p>;
 
   return (
     <div className="flex flex-col gap-3">
@@ -33,7 +33,7 @@ export default function ExpiringProductBatchesList() {
           >
             <div>
               <p className="font-semibold text-navy-900">{row.product_name}</p>
-              <p className="text-xs text-navy-900/50">
+              <p className="text-xs text-navy-900/70">
                 Batch {row.batch_number} · {Number(row.quantity_on_hand).toLocaleString()} bottles in stock
               </p>
             </div>

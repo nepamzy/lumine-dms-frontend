@@ -25,7 +25,7 @@ export default function CustomerDashboard() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              tab === t ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/50 hover:text-navy-900"
+              tab === t ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/70 hover:text-navy-900"
             }`}
           >
             {t === "orders" ? "Orders" : "Expiring Batches"}
@@ -37,11 +37,11 @@ export default function CustomerDashboard() {
         <ExpiringBatchesList />
       ) : (
         <>
-          {loading && <p className="text-navy-900/60">Loading your orders…</p>}
+          {loading && <p className="text-navy-900/70">Loading your orders…</p>}
 
           {!loading && orders.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-navy-900/60 mb-4">You haven't placed any orders yet.</p>
+              <p className="text-navy-900/70 mb-4">You haven't placed any orders yet.</p>
               <Link to="/catalog" className="bg-navy-800 text-cream-50 font-bold text-sm px-6 py-3 rounded-md">
                 Browse Catalog
               </Link>
@@ -60,7 +60,7 @@ export default function CustomerDashboard() {
                 >
                   <div>
                     <p className="font-semibold text-navy-900">{order.order_number}</p>
-                    <p className="text-xs text-navy-900/50">
+                    <p className="text-xs text-navy-900/70">
                       {new Date(order.created_at).toLocaleDateString()}
                     </p>
                   </div>

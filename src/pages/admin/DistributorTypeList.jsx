@@ -57,7 +57,7 @@ export default function DistributorTypeList({ distributorType, label }) {
   const STATUS_STYLES = {
     pending: "bg-gold-500/20 text-gold-700",
     rejected: "bg-status-danger/15 text-status-danger",
-    suspended: "bg-navy-900/10 text-navy-900/60",
+    suspended: "bg-navy-900/10 text-navy-900/70",
   };
 
   const Row = ({ d, showActions }) => (
@@ -72,7 +72,7 @@ export default function DistributorTypeList({ distributorType, label }) {
             <span className="text-navy-900/40 font-normal"> (User {Number(d.prior_accounts_count) + 1})</span>
           )}
         </p>
-        <p className="text-xs text-navy-900/50">
+        <p className="text-xs text-navy-900/70">
           {d.full_name} · {d.email} · {d.state}
           {d.local_government ? ` · ${d.local_government}` : ""}
         </p>
@@ -118,11 +118,11 @@ export default function DistributorTypeList({ distributorType, label }) {
       <h2 className="font-display font-bold text-xl text-navy-900 mb-5">{label}</h2>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : (
         <>
           {approved.length === 0 ? (
-            <p className="text-navy-900/60 mb-4">No approved {label.toLowerCase()} yet.</p>
+            <p className="text-navy-900/70 mb-4">No approved {label.toLowerCase()} yet.</p>
           ) : (
             <div className="flex flex-col gap-3 mb-4">
               {approved.map((d) => <Row key={d.id} d={d} showActions={false} />)}
@@ -140,7 +140,7 @@ export default function DistributorTypeList({ distributorType, label }) {
           {showOthers && (
             <div className="flex flex-col gap-3">
               {others.length === 0 ? (
-                <p className="text-navy-900/50 text-sm">Nothing else here.</p>
+                <p className="text-navy-900/70 text-sm">Nothing else here.</p>
               ) : (
                 others.map((d) => <Row key={d.id} d={d} showActions={true} />)
               )}

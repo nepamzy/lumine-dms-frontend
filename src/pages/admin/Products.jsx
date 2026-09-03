@@ -54,11 +54,11 @@ export default function Products() {
       </div>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : (
         <div className="bg-white rounded-card shadow-card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-navy-900/5 text-navy-900/60 text-xs uppercase">
+            <thead className="bg-navy-900/5 text-navy-900/70 text-xs uppercase">
               <tr>
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-left px-4 py-3">SKU</th>
@@ -72,11 +72,11 @@ export default function Products() {
               {products.map((p) => (
                 <tr key={p.id} className={`border-t border-navy-900/5 ${!p.is_active ? "opacity-50" : ""}`}>
                   <td className="px-4 py-3 font-medium text-navy-900">{p.name}</td>
-                  <td className="px-4 py-3 text-navy-900/60">{p.sku}</td>
+                  <td className="px-4 py-3 text-navy-900/70">{p.sku}</td>
                   <td className="px-4 py-3 text-right">₦{Number(p.unit_price).toLocaleString()}</td>
                   <td className="px-4 py-3 text-right">{p.total_stock}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${p.is_active ? "bg-green-500/15 text-green-500" : "bg-status-danger/15 text-status-danger"}`}>
+                    <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${p.is_active ? "bg-green-500/15 text-green-700" : "bg-status-danger/15 text-status-danger"}`}>
                       {p.is_active ? "Active" : "Out of stock"}
                     </span>
                   </td>
@@ -143,7 +143,7 @@ function Modal({ title, onClose, children }) {
       <div className="bg-white rounded-card p-6 w-full max-w-sm">
         <h3 className="font-display font-bold text-lg text-navy-900 mb-4">{title}</h3>
         {children}
-        <button onClick={onClose} className="text-xs text-navy-900/50 mt-3 underline">
+        <button onClick={onClose} className="text-xs text-navy-900/70 mt-3 underline">
           Cancel
         </button>
       </div>
@@ -281,9 +281,9 @@ function ManageBatchesModal({ product, onClose, onSaved }) {
   return (
     <Modal title={`Batches — ${product.name}`} onClose={onClose}>
       {loading ? (
-        <p className="text-xs text-navy-900/50">Loading…</p>
+        <p className="text-xs text-navy-900/70">Loading…</p>
       ) : batches.length === 0 ? (
-        <p className="text-xs text-navy-900/50">No batches yet — use "Add Batch" first.</p>
+        <p className="text-xs text-navy-900/70">No batches yet — use "Add Batch" first.</p>
       ) : (
         <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
           {batches.map((b) => (

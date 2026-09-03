@@ -32,9 +32,9 @@ export default function Orders() {
       <h2 className="font-display font-bold text-xl text-navy-900 mb-5">Orders</h2>
 
       {loading ? (
-        <p className="text-navy-900/60">Loading…</p>
+        <p className="text-navy-900/70">Loading…</p>
       ) : orders.length === 0 ? (
-        <p className="text-navy-900/60">No orders yet.</p>
+        <p className="text-navy-900/70">No orders yet.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {orders.map((order) => {
@@ -44,7 +44,7 @@ export default function Orders() {
               <div key={order.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between gap-4">
                 <Link to={`/orders/${order.id}`} className="flex-1">
                   <p className="font-semibold text-navy-900">{order.order_number}</p>
-                  <p className="text-xs text-navy-900/50">
+                  <p className="text-xs text-navy-900/70">
                     {order.customer_name} · {new Date(order.created_at).toLocaleDateString()} · ₦
                     {Number(order.total_amount).toLocaleString()}
                     {" · "}
@@ -55,7 +55,7 @@ export default function Orders() {
                 <div className="flex flex-col items-end gap-1">
                   <span
                     className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${
-                      order.paymentPercent >= 100 ? "bg-green-500/15 text-green-500" : "bg-navy-900/10 text-navy-900/60"
+                      order.paymentPercent >= 100 ? "bg-green-500/15 text-green-700" : "bg-navy-900/10 text-navy-900/70"
                     }`}
                   >
                     {order.paymentPercent >= 100 ? "Complete" : "Pending"}

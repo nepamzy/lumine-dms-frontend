@@ -41,7 +41,7 @@ export default function AddressPromptPopup() {
           ✕
         </button>
         <h2 className="font-display font-bold text-lg text-navy-900 mb-2">Add your address</h2>
-        <p className="text-sm text-navy-900/60 mb-4">
+        <p className="text-sm text-navy-900/70 mb-4">
           We don't have a street address on file for your account yet — adding one helps admin and
           customers reach you accurately.
         </p>

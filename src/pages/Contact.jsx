@@ -39,7 +39,7 @@ export default function Contact() {
         <h1 className="font-display font-bold text-3xl md:text-4xl text-navy-900 mb-3">
           Contact Us
         </h1>
-        <p className="text-navy-900/60 text-sm md:text-base">
+        <p className="text-navy-900/70 text-sm md:text-base">
           We'd love to hear from you. Reach out anytime.
         </p>
       </section>
@@ -51,7 +51,7 @@ export default function Contact() {
           </span>
           <div>
             <h3 className="font-display font-bold text-navy-900 text-sm mb-1">Visit Us</h3>
-            <p className="text-sm text-navy-900/60">
+            <p className="text-sm text-navy-900/70">
               Eq, 15 Bida Road by Abeokuta Street, Kaduna North, Kaduna
             </p>
           </div>
@@ -63,8 +63,8 @@ export default function Contact() {
           </span>
           <div>
             <h3 className="font-display font-bold text-navy-900 text-sm mb-1">Call Us</h3>
-            <p className="text-sm text-navy-900/60">+234 703 110 2978</p>
-            <p className="text-sm text-navy-900/60">+234 806 077 4734</p>
+            <p className="text-sm text-navy-900/70">+234 703 110 2978</p>
+            <p className="text-sm text-navy-900/70">+234 806 077 4734</p>
           </div>
         </div>
 
@@ -74,7 +74,7 @@ export default function Contact() {
           </span>
           <div>
             <h3 className="font-display font-bold text-navy-900 text-sm mb-1">Email Us</h3>
-            <p className="text-sm text-navy-900/60">bonchrissupport@gmail.com</p>
+            <p className="text-sm text-navy-900/70">bonchrissupport@gmail.com</p>
           </div>
         </div>
       </section>

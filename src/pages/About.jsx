@@ -52,13 +52,13 @@ export default function About() {
         <h2 className="font-display font-extrabold text-3xl md:text-4xl text-navy-900 mb-6">
           Our Story
         </h2>
-        <p className="text-navy-900/60 text-sm md:text-base leading-relaxed">
+        <p className="text-navy-900/70 text-sm md:text-base leading-relaxed">
           Lumine started with a simple belief: every Nigerian deserves access to fresh,
           high-quality yoghurt. Founded in Kaduna, we've grown from a small production unit
           to a nationwide distribution network serving supermarkets, restaurants, hotels, and
           homes across all 36 states and the FCT.
         </p>
-        <p className="text-navy-900/60 text-sm md:text-base leading-relaxed mt-4">
+        <p className="text-navy-900/70 text-sm md:text-base leading-relaxed mt-4">
           Our state-of-the-art production facility combines traditional craftsmanship with
           modern technology to create yoghurt that's consistently creamy, delicious, and
           packed with nutrients. Every batch is quality-tested before it reaches our network
@@ -72,7 +72,7 @@ export default function About() {
           <p className="font-display font-extrabold text-4xl text-navy-900 mb-2">
             10<span className="text-gold-500">+</span>
           </p>
-          <p className="text-navy-900/60 text-sm md:text-base">Years of Excellence</p>
+          <p className="text-navy-900/70 text-sm md:text-base">Years of Excellence</p>
         </div>
       </section>
 
@@ -91,7 +91,7 @@ export default function About() {
                 {v.icon}
               </div>
               <h3 className="font-display font-bold text-navy-900 mb-1">{v.title}</h3>
-              <p className="text-sm text-navy-900/55">{v.desc}</p>
+              <p className="text-sm text-navy-900/70">{v.desc}</p>
             </div>
           ))}
         </div>

@@ -8,7 +8,7 @@ export default function Trash() {
   return (
     <div>
       <h2 className="font-display font-bold text-xl text-navy-900 mb-2">Trash</h2>
-      <p className="text-sm text-navy-900/50 mb-5">
+      <p className="text-sm text-navy-900/70 mb-5">
         Nothing here is destroyed — everything can be restored to exactly where it was.
       </p>
 
@@ -21,7 +21,7 @@ export default function Trash() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === t.key ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/50 hover:text-navy-900"
+              tab === t.key ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/70 hover:text-navy-900"
             }`}
           >
             {t.label}
@@ -66,8 +66,8 @@ function UsersTab() {
     }
   };
 
-  if (loading) return <p className="text-navy-900/60">Loading…</p>;
-  if (rows.length === 0) return <p className="text-navy-900/60">No removed accounts.</p>;
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+  if (rows.length === 0) return <p className="text-navy-900/70">No removed accounts.</p>;
 
   return (
     <div className="flex flex-col gap-3">
@@ -78,13 +78,13 @@ function UsersTab() {
             <p className="font-semibold text-navy-900">
               {r.distributor_business_name || r.customer_business_name || r.full_name}
             </p>
-            <p className="text-xs text-navy-900/50">
+            <p className="text-xs text-navy-900/70">
               {r.full_name} · {r.email} · {r.phone}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/60">
+              <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-navy-900/10 text-navy-900/70">
                 {roleLabel(r)}
               </span>
               <p className="text-[11px] text-navy-900/40 mt-1">Removed {new Date(r.deleted_at).toLocaleDateString()}</p>
@@ -136,8 +136,8 @@ function OrdersTab() {
     }
   };
 
-  if (loading) return <p className="text-navy-900/60">Loading…</p>;
-  if (orders.length === 0) return <p className="text-navy-900/60">No removed orders.</p>;
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+  if (orders.length === 0) return <p className="text-navy-900/70">No removed orders.</p>;
 
   return (
     <div className="flex flex-col gap-3">
@@ -151,7 +151,7 @@ function OrdersTab() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-semibold text-navy-900">{order.order_number}</p>
-                <p className="text-xs text-navy-900/50">
+                <p className="text-xs text-navy-900/70">
                   {order.customer_name} · {new Date(order.created_at).toLocaleDateString()} · ₦
                   {Number(order.total_amount).toLocaleString()} · <span className="capitalize">{order.status}</span>
                 </p>
@@ -170,7 +170,7 @@ function OrdersTab() {
               </div>
             </div>
             {order.items?.length > 0 && (
-              <ul className="mt-3 pt-3 border-t border-navy-900/10 text-xs text-navy-900/60 flex flex-col gap-1">
+              <ul className="mt-3 pt-3 border-t border-navy-900/10 text-xs text-navy-900/70 flex flex-col gap-1">
                 {order.items.map((item, i) => (
                   <li key={i}>
                     {item.product_name} {item.variant_size ? `(${item.variant_size})` : ""} × {item.quantity} — ₦

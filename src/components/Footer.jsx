@@ -19,7 +19,7 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h4 className="font-display font-bold text-cream-50 mb-4">Quick Links</h4>
+          <h3 className="font-display font-bold text-cream-50 mb-4">Quick Links</h3>
           <ul className="space-y-3 text-sm">
             <li>
               <Link to="/about" className="hover:text-gold-500 transition-colors">
@@ -46,7 +46,7 @@ export default function Footer() {
 
         {/* For Business */}
         <div>
-          <h4 className="font-display font-bold text-cream-50 mb-4">For Business</h4>
+          <h3 className="font-display font-bold text-cream-50 mb-4">For Business</h3>
           <ul className="space-y-3 text-sm">
             <li>
               <Link to="/register?role=customer" className="hover:text-gold-500 transition-colors">
@@ -78,7 +78,7 @@ export default function Footer() {
 
         {/* Contact */}
         <div>
-          <h4 className="font-display font-bold text-cream-50 mb-4">Contact</h4>
+          <h3 className="font-display font-bold text-cream-50 mb-4">Contact</h3>
           <ul className="space-y-3 text-sm">
             <li className="flex items-start gap-2">
               <span aria-hidden="true">📍</span>
@@ -109,7 +109,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-5 text-center text-xs text-cream-50/40">
+      <div className="border-t border-white/10 py-5 text-center text-xs text-cream-50/60">
         © {new Date().getFullYear()} Lumine — a Bonchris Industry Nig. Ltd brand. All rights reserved.
       </div>
     </footer>

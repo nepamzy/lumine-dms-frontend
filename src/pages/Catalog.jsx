@@ -49,7 +49,7 @@ export default function Catalog() {
         path="/catalog"
       />
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Product Catalog</h1>
-     <p className="text-navy-900/60 text-sm mb-8">
+     <p className="text-navy-900/70 text-sm mb-8">
         3 flavours, all batch and expiry tracked for freshness.
       </p>
 
@@ -69,11 +69,11 @@ export default function Catalog() {
         </div>
       )}
 
-      {loading && <p className="text-navy-900/60">Loading products…</p>}
+      {loading && <p className="text-navy-900/70">Loading products…</p>}
       {error && <p className="text-status-danger">{error}</p>}
 
       {!loading && !error && products.length === 0 && (
-        <p className="text-navy-900/60">No products are available right now.</p>
+        <p className="text-navy-900/70">No products are available right now.</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

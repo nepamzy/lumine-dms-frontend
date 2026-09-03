@@ -16,8 +16,8 @@ export default function ExpiringBatchesList() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-navy-900/60">Loading…</p>;
-  if (rows.length === 0) return <p className="text-navy-900/60">No batches currently tracked for expiry.</p>;
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+  if (rows.length === 0) return <p className="text-navy-900/70">No batches currently tracked for expiry.</p>;
 
   return (
     <div className="flex flex-col gap-3">
@@ -31,7 +31,7 @@ export default function ExpiringBatchesList() {
           >
             <div>
               <p className="font-semibold text-navy-900">{row.order_number}</p>
-              <p className="text-xs text-navy-900/50">
+              <p className="text-xs text-navy-900/70">
                 {row.product_names} — {row.customer_name}
               </p>
             </div>
