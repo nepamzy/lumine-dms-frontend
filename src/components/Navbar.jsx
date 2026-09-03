@@ -1,11 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useInstallPrompt } from "../utils/installPrompt";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
+  const { canInstall, isIOS, promptInstall } = useInstallPrompt();
+
+  const handleInstallClick = async () => {
+    if (isIOS) {
+      window.alert('To install: tap the Share button in Safari, then "Add to Home Screen".');
+      return;
+    }
+    await promptInstall();
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -26,6 +36,14 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-3">
+          {canInstall && (
+            <button
+              onClick={handleInstallClick}
+              className="text-xs font-bold border border-gold-500 text-gold-500 px-3 py-2 rounded-md hover:bg-gold-500 hover:text-navy-900 transition-colors whitespace-nowrap"
+            >
+              Install
+            </button>
+          )}
           {(user?.role === "customer" || user?.role === "distributor") && (
             <Link to="/cart" className="relative text-sm">
               Cart
