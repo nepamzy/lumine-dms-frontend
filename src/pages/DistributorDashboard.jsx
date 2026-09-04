@@ -11,7 +11,7 @@ import {
   getCustomerHistoryForRep,
   pingCustomer,
 } from "../api/distributor";
-import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
+import { getPaymentBand, getPaymentBandStyles, getOrderListBadge } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
 import STATE_LGAS from "../data/nigeria-states-lgas.json";
 
@@ -222,8 +222,7 @@ function DistributorSimpleDashboard({ user }) {
             ) : (
               <div className="flex flex-col gap-3">
                 {orders.map((order) => {
-                  const band = getPaymentBand(order.paymentPercent);
-                  const styles = getPaymentBandStyles(band);
+                  const badge = getOrderListBadge(order.paymentPercent);
                   return (
                     <Link
                       key={order.id}
@@ -240,8 +239,8 @@ function DistributorSimpleDashboard({ user }) {
                         <p className="font-display font-bold text-navy-800 mb-1">
                           ₦{Number(order.total_amount).toLocaleString()}
                         </p>
-                        <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${styles.bg} ${styles.text}`}>
-                          {order.paymentPercent.toFixed(0)}% paid
+                        <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${badge.bg} ${badge.text}`}>
+                          {badge.label}
                         </span>
                       </div>
                     </Link>

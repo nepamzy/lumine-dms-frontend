@@ -136,3 +136,10 @@ export async function getDistributorHistory(distributorId) {
   const { data } = await api.get(`/admin/distributors/${distributorId}/history`);
   return data.data;
 }
+
+export async function getTargetOverviewForRep(distributorId, year, month) {
+  const { data } = await api.get(`/admin/distributors/${distributorId}/target-overview`, {
+    params: { year, month },
+  });
+  return data.data;
+}

@@ -17,6 +17,19 @@ export function getPaymentBandStyles(band) {
   }
 }
 
+// Badge for an order-list card (My Orders / Your Orders): a freshly placed
+// order with nothing paid yet reads as "0% paid" in red, which looks like
+// the order itself failed rather than just being unpaid so far. Show a
+// neutral "Order Confirmed" badge instead until the first payment lands,
+// then switch to the real percentage.
+export function getOrderListBadge(percent) {
+  if (percent <= 0) {
+    return { label: "Order Confirmed", bg: "bg-navy-800/10", text: "text-navy-800" };
+  }
+  const styles = getPaymentBandStyles(getPaymentBand(percent));
+  return { label: `${percent.toFixed(0)}% paid`, bg: styles.bg, text: styles.text };
+}
+
 // The minimum percent a buyer must reach on their current order(s) before
 // they're allowed to place a new one. Mirrors the backend's own gating so
 // the UI can warn proactively instead of just showing a server error.
