@@ -50,8 +50,19 @@ const refreshUser = useCallback(async () => {
     setUser(data.data);
   }, []);
 
+  // Finishes the forgot-password flow: sets the new password and signs the
+  // user straight in with it, same as login() does after a normal sign-in.
+  const completePasswordReset = useCallback(async (resetToken, newPassword) => {
+    await authApi.resetPassword(resetToken, newPassword);
+    const { data } = await api.get("/auth/me");
+    setUser(data.data);
+    return data.data;
+  }, []);
+
   return (
-   <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, refreshUser }}>
+   <AuthContext.Provider
+      value={{ user, loading, login, register, logout, setUser, refreshUser, completePasswordReset }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Seo from "../components/Seo";
+import PasswordInput from "../components/PasswordInput";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -47,12 +48,16 @@ export default function Login() {
           />
         </div>
         <div>
-          <label htmlFor="login-password" className="text-xs font-semibold text-navy-900/70 block mb-1">
-            Password
-          </label>
-          <input
+          <div className="flex items-baseline justify-between mb-1">
+            <label htmlFor="login-password" className="text-xs font-semibold text-navy-900/70">
+              Password
+            </label>
+            <Link to="/forgot-password" className="text-xs font-semibold text-navy-800 underline">
+              Forgot password?
+            </Link>
+          </div>
+          <PasswordInput
             id="login-password"
-            type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}

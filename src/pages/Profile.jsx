@@ -1,6 +1,7 @@
 import { useState, useId, cloneElement } from "react";
 import { useAuth } from "../context/AuthContext";
 import { updateProfile, changePassword } from "../api/auth";
+import PasswordInput from "../components/PasswordInput";
 
 const NIGERIAN_STATES = [
   "Lagos", "Kaduna", "Abuja", "Rivers", "Oyo", "Kano", "Ogun", "Enugu", "Delta", "Other",
@@ -108,23 +109,19 @@ export default function Profile() {
         <h2 className="font-display font-bold text-navy-900">Change Password</h2>
 
         <Field label="Current password">
-          <input
-            type="password"
+          <PasswordInput
             required
             value={passwordForm.currentPassword}
             onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
-            className="input"
           />
         </Field>
 
         <Field label="New password">
-          <input
-            type="password"
+          <PasswordInput
             required
             minLength={8}
             value={passwordForm.newPassword}
             onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
-            className="input"
           />
         </Field>
 

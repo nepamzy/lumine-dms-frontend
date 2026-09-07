@@ -18,6 +18,9 @@ const Catalog = lazy(() => import("./pages/Catalog"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const VerifyResetCode = lazy(() => import("./pages/VerifyResetCode"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
@@ -54,6 +57,9 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-reset-code" element={<VerifyResetCode />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/become-a-distributor" element={<Navigate to="/register?role=distributor" replace />} />
 
           <Route
