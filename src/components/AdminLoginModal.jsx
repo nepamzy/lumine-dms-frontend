@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PasswordInput from "./PasswordInput";
 
 // Reached only via the hidden tap gesture on the homepage — not linked
 // from anywhere else. Verifies the account is actually an admin before
@@ -49,13 +50,11 @@ export default function AdminLoginModal({ onClose }) {
             autoComplete="off"
             name="admin-login-email"
           />
-          <input
+          <PasswordInput
             required
-            type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input"
             autoComplete="new-password"
             name="admin-login-password"
           />

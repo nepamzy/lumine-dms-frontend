@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import STATE_LGAS from "../data/nigeria-states-lgas.json";
 import Seo from "../components/Seo";
+import PasswordInput from "../components/PasswordInput";
 
 const NIGERIAN_STATES = Object.keys(STATE_LGAS);
 
@@ -143,7 +144,7 @@ export default function Register() {
           <input required value={form.phone} onChange={update("phone")} className="input" placeholder="08012345678" />
         </Field>
         <Field label="Password">
-          <input type="password" required minLength={8} value={form.password} onChange={update("password")} className="input" />
+          <PasswordInput required minLength={8} value={form.password} onChange={update("password")} />
         </Field>
         <Field label="State">
           <select value={form.state} onChange={updateState} className="input">
