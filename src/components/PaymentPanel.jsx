@@ -41,7 +41,16 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
   const band = getPaymentBand(percent);
   const styles = getPaymentBandStyles(band);
   const remaining = Math.max(0, Number(order.total_amount) - order.payment.totalPaid);
-  const minDistributorPayment = order.buyerKind === "distributor" ? 0.7 * Number(order.total_amount) : 0;
+
+  // Only the FIRST successful payment on an order needs to clear a minimum
+  // floor (60% for a customer, 85% for a distributor) — once that's in,
+  // later top-ups can be any amount, so this hint only shows before any
+  // payment has landed. Sales reps have their own full-payment-only rule,
+  // not a floor, so they're excluded here.
+  const firstPaymentMinPercent =
+    order.buyerKind === "distributor" ? 85 : order.buyerKind === "customer" ? 60 : null;
+  const firstPaymentMinAmount = firstPaymentMinPercent ? (firstPaymentMinPercent / 100) * Number(order.total_amount) : 0;
+  const showFirstPaymentHint = firstPaymentMinPercent && order.payment.totalPaid === 0;
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -233,9 +242,9 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
 
       {canPay && percent < 100 && (
         <form onSubmit={handlePay} className="flex flex-col gap-2 pt-3 border-t border-navy-900/10">
-          {order.buyerKind === "distributor" && percent < 70 && (
+          {showFirstPaymentHint && (
             <p className="text-xs text-navy-900/70">
-              Payments must be at least 70% of the order total (₦{minDistributorPayment.toLocaleString()}) unless it's your final top-up.
+              Your first payment must be at least {firstPaymentMinPercent}% of the order total (₦{firstPaymentMinAmount.toLocaleString()}) unless it completes the order. After that, top-ups can be any amount.
             </p>
           )}
           <input
