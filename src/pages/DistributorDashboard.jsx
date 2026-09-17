@@ -738,6 +738,184 @@ function HierarchySalesRepsTab() {
   );
 }
 
+// Full-width, auto-ranked customer payment standing (item 10) — the same
+// customer book as Track Record, but sorted by urgency instead of A-Z:
+// under 50% paid at the top (needs chasing), 50-99% in the middle, fully
+// paid at the bottom. The ranking is computed fresh from each customer's
+// live paymentPercent on every load (not a fixed manual order), so it
+// naturally re-sorts as payment status changes between visits. Works the
+// same for an independent sales rep and one registered under a
+// distributor — both just call the same track-record endpoint.
+const STANDING_TIERS = [
+  { key: "urgent", label: "Needs Attention", sub: "Under 50% paid", test: (p) => p < 50, accent: "border-status-danger" },
+  { key: "progress", label: "In Progress", sub: "50–99% paid", test: (p) => p >= 50 && p < 100, accent: "border-gold-500" },
+  { key: "settled", label: "Fully Paid", sub: "100% paid", test: (p) => p >= 100, accent: "border-green-500" },
+];
+
+function PaymentStandingTab() {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [pinging, setPingingId] = useState(null);
+  const [pingSent, setPingSentId] = useState(null);
+
+  const refresh = () => listTrackRecordCustomers().then(setCustomers).finally(() => setLoading(false));
+
+  useEffect(() => {
+    setLoading(true);
+    refresh();
+  }, []);
+
+  const openCustomer = async (customer) => {
+    setSelected(customer);
+    setHistoryLoading(true);
+    setPingSentId(null);
+    try {
+      setHistory(await getCustomerHistoryForRep(customer.id));
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handlePing = async (order) => {
+    setPingingId(order.id);
+    try {
+      await pingCustomer(selected.id, order.id);
+      setPingSentId(order.id);
+    } finally {
+      setPingingId(null);
+    }
+  };
+
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+
+  if (selected) {
+    return (
+      <div>
+        <button
+          onClick={() => { setSelected(null); setHistory(null); refresh(); }}
+          className="text-sm text-navy-900/70 hover:text-navy-900 mb-4"
+        >
+          ← Back to Payment Standing
+        </button>
+        <h3 className="font-display font-bold text-navy-900 text-xl mb-1">
+          {selected.business_name || selected.full_name}
+        </h3>
+        <p className="text-sm text-navy-900/70 mb-6">{selected.full_name} · {selected.phone}</p>
+
+        {historyLoading ? (
+          <p className="text-navy-900/70">Loading…</p>
+        ) : !history?.orders?.length ? (
+          <p className="text-navy-900/70">No orders to show.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-4">
+            {history.orders.map((o) => {
+              const band = getPaymentBand(o.payment_percent);
+              const styles = getPaymentBandStyles(band);
+              const remaining = Math.max(0, Number(o.total_amount) - Number(o.paid_amount));
+              return (
+                <div key={o.id} className="bg-white rounded-card shadow-card p-5">
+                  <div className="flex items-center justify-between gap-4 mb-3">
+                    <div>
+                      <p className="font-semibold text-navy-900">{o.order_number}</p>
+                      <p className="text-xs text-navy-900/70">{new Date(o.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${styles.bg} ${styles.text}`}>
+                      {Math.round(o.payment_percent)}% paid
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 pt-3 border-t border-navy-900/10">
+                    <div className="text-xs text-navy-900/70">
+                      <p>Paid: ₦{Number(o.paid_amount).toLocaleString()}</p>
+                      <p>Remaining: ₦{remaining.toLocaleString()}</p>
+                    </div>
+                    {o.payment_percent < 100 && (
+                      <button
+                        onClick={() => handlePing(o)}
+                        disabled={pinging === o.id}
+                        className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {pinging === o.id ? "Sending…" : pingSent === o.id ? "Sent ✓" : "Ping"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="font-display font-bold text-navy-900 text-xl mb-1">Payment Standing</h3>
+      <p className="text-sm text-navy-900/70 mb-6">
+        Your customers, ranked by who needs a nudge most — updates automatically as payments come in.
+      </p>
+      {customers.length === 0 ? (
+        <p className="text-navy-900/70">No customers to track yet.</p>
+      ) : (
+        <div className="flex flex-col gap-8">
+          {STANDING_TIERS.map((tier) => {
+            const inTier = customers.filter((c) => tier.test(c.paymentPercent));
+            return (
+              <div key={tier.key}>
+                <div className="flex items-baseline gap-2 mb-3">
+                  <h4 className="font-display font-bold text-navy-900">
+                    {tier.label} <span className="text-navy-900/40 font-normal">({inTier.length})</span>
+                  </h4>
+                  <span className="text-xs text-navy-900/50">{tier.sub}</span>
+                </div>
+                {inTier.length === 0 ? (
+                  <p className="text-sm text-navy-900/40">Nobody here right now.</p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {inTier.map((c) => {
+                      const band = getPaymentBand(c.paymentPercent);
+                      const styles = getPaymentBandStyles(band);
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => openCustomer(c)}
+                          className={`bg-white rounded-card shadow-card p-5 text-left border-l-4 ${tier.accent} hover:shadow-md transition-shadow`}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div>
+                              <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
+                              <p className="text-xs text-navy-900/70">{c.full_name} · {c.phone}</p>
+                            </div>
+                            {!c.currently_assigned && (
+                              <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-navy-900/10 text-navy-900/70 whitespace-nowrap">
+                                Unassigned
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className={`font-display font-extrabold text-2xl ${styles.text}`}>
+                              {Math.round(c.paymentPercent)}%
+                            </span>
+                            <span className="text-xs text-navy-900/50">
+                              ₦{Number(c.total_paid).toLocaleString()} / ₦{Number(c.total_owed).toLocaleString()}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Customer list -> tap a customer -> their full order history with amount
 // paid/remaining/percentage, plus a Ping button per unpaid order that
 // sends an SMS payment reminder. Customers who've since been reassigned or
@@ -988,14 +1166,14 @@ function SalesRepDashboard({ user, roleLabel }) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className={`${tab === "payment-standing" ? "max-w-6xl" : "max-w-3xl"} mx-auto px-6 py-10`}>
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">
         Welcome, {user?.full_name?.split(" ")[0]}
       </h1>
       <p className="text-navy-900/70 text-sm mb-6">{roleLabel} dashboard</p>
 
-      <div className="flex gap-1 border-b border-navy-900/10 mb-8">
-        {["route", "orders", "referral", "place-order", "register-customer", "track-record", "expiring"].map((t) => (
+      <div className="flex gap-1 border-b border-navy-900/10 mb-8 flex-wrap">
+        {["route", "orders", "referral", "place-order", "register-customer", "payment-standing", "track-record", "expiring"].map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setPlaceOrderMode(null); }}
@@ -1015,6 +1193,8 @@ function SalesRepDashboard({ user, roleLabel }) {
               ? "Place Order"
               : t === "register-customer"
               ? "Register Customer"
+              : t === "payment-standing"
+              ? "Payment Standing"
               : t === "track-record"
               ? "Track Record"
               : "Expiring Batches"}
@@ -1144,6 +1324,8 @@ function SalesRepDashboard({ user, roleLabel }) {
         )
       ) : tab === "register-customer" ? (
         <RegisterCustomerForRep onRegistered={refreshCustomers} />
+      ) : tab === "payment-standing" ? (
+        <PaymentStandingTab />
       ) : tab === "track-record" ? (
         <TrackRecordTab />
       ) : tab === "expiring" ? (
