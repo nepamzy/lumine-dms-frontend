@@ -1158,7 +1158,9 @@ function SalesRepDashboard({ user, roleLabel }) {
               </div>
               <div className="text-right">
                 <p className="font-semibold text-navy-800">₦{Number(o.total_amount).toLocaleString()}</p>
-                <p className="text-xs text-navy-900/70">{o.status.replace(/_/g, " ")}</p>
+                <p className="text-xs text-navy-900/70">
+                  {o.status === "pending" ? "Order Confirmed" : o.status.replace(/_/g, " ")}
+                </p>
               </div>
             </div>
           ))}

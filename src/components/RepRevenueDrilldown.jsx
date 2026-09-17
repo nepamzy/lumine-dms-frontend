@@ -108,7 +108,7 @@ export default function RepRevenueDrilldown({ rows, lockType = null }) {
                       Number(o.payment_percent) >= 100 ? "bg-green-500/15 text-green-700" : "bg-navy-900/10 text-navy-900/70"
                     }`}
                   >
-                    {Number(o.payment_percent) >= 100 ? "Complete" : "Pending"}
+                    {Number(o.payment_percent) >= 100 ? "Complete" : "Order Confirmed"}
                   </span>
                   <Link to={`/orders/${o.id}`} className="text-xs font-semibold text-navy-800 underline whitespace-nowrap">
                     Manage

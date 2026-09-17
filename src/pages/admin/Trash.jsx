@@ -153,7 +153,8 @@ function OrdersTab() {
                 <p className="font-semibold text-navy-900">{order.order_number}</p>
                 <p className="text-xs text-navy-900/70">
                   {order.customer_name} · {new Date(order.created_at).toLocaleDateString()} · ₦
-                  {Number(order.total_amount).toLocaleString()} · <span className="capitalize">{order.status}</span>
+                  {Number(order.total_amount).toLocaleString()} ·{" "}
+                  <span className="capitalize">{order.status === "pending" ? "Order Confirmed" : order.status}</span>
                 </p>
               </div>
               <div className="flex items-center gap-3">

@@ -261,7 +261,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                               : "bg-navy-900/10 text-navy-900/70"
                           }`}
                         >
-                          {o.payment_percent >= 100 ? "Complete" : "Pending"}
+                          {o.payment_percent >= 100 ? "Complete" : "Order Confirmed"}
                         </span>
                         <PaymentBadge percent={o.payment_percent} />
                       </div>
