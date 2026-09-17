@@ -58,3 +58,21 @@ export async function getPayoutAccountStatus() {
   const { data } = await api.get("/admin/distributors/me/payout-account");
   return data.data;
 }
+
+// Read-only hierarchy visibility (item 8) — true distributors only. Never
+// pair these with a mutating action; payment approval and order management
+// stay exclusively admin-controlled.
+export async function listHierarchyCustomers() {
+  const { data } = await api.get("/admin/distributors/me/hierarchy/customers");
+  return data.data;
+}
+
+export async function getHierarchyCustomerHistory(customerId) {
+  const { data } = await api.get(`/admin/distributors/me/hierarchy/customers/${customerId}`);
+  return data.data;
+}
+
+export async function listHierarchySalesReps() {
+  const { data } = await api.get("/admin/distributors/me/hierarchy/sales-reps");
+  return data.data;
+}

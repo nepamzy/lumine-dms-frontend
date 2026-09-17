@@ -15,6 +15,9 @@ import {
   resolveBankAccount,
   confirmPayoutAccount,
   getPayoutAccountStatus,
+  listHierarchyCustomers,
+  getHierarchyCustomerHistory,
+  listHierarchySalesReps,
 } from "../api/distributor";
 import { getPaymentBand, getPaymentBandStyles, getOrderListBadge } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
@@ -189,7 +192,7 @@ function DistributorSimpleDashboard({ user }) {
       <p className="text-navy-900/70 text-sm mb-6">Distributor dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8 flex-wrap">
-        {["overview", "place-order", "register-sales-rep", "register-customer", "payout-account"].map((t) => (
+        {["overview", "place-order", "register-sales-rep", "register-customer", "customers", "sales-reps", "payout-account"].map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setPlaceOrderMode(null); }}
@@ -207,12 +210,20 @@ function DistributorSimpleDashboard({ user }) {
               ? "Register Sales Rep"
               : t === "register-customer"
               ? "Register Customer"
+              : t === "customers"
+              ? "Customers"
+              : t === "sales-reps"
+              ? "Sales Reps"
               : "Payout Account"}
           </button>
         ))}
       </div>
 
-      {tab === "payout-account" ? (
+      {tab === "customers" ? (
+        <HierarchyCustomersTab />
+      ) : tab === "sales-reps" ? (
+        <HierarchySalesRepsTab />
+      ) : tab === "payout-account" ? (
         <PayoutAccountTab />
       ) : tab === "place-order" ? (
         placeOrderMode === null ? (
@@ -573,6 +584,156 @@ function PayoutAccountTab() {
           </button>
         )}
       </form>
+    </div>
+  );
+}
+
+// Read-only visibility (item 8) — every real customer in this true
+// distributor's whole hierarchy: assigned directly to them, or to one of
+// their sales reps. Full order/payment detail on tap, but deliberately NO
+// action buttons anywhere in this component — no Ping, no reassignment, no
+// payment authorization. Payment approval and order management stay
+// exclusively admin-controlled; this tab exists purely so a distributor
+// can see what's happening across their business.
+function HierarchyCustomersTab() {
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    listHierarchyCustomers().then(setCustomers).finally(() => setLoading(false));
+  }, []);
+
+  const openCustomer = async (customer) => {
+    setSelected(customer);
+    setHistoryLoading(true);
+    try {
+      setHistory(await getHierarchyCustomerHistory(customer.id));
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+
+  if (selected) {
+    return (
+      <div>
+        <button
+          onClick={() => { setSelected(null); setHistory(null); }}
+          className="text-sm text-navy-900/70 hover:text-navy-900 mb-4"
+        >
+          ← Back to customers
+        </button>
+        <h3 className="font-display font-bold text-navy-900 mb-1">
+          {selected.business_name || selected.full_name}
+        </h3>
+        <p className="text-xs text-navy-900/70 mb-5">
+          {selected.full_name} · {selected.email} · {selected.phone}
+        </p>
+        {historyLoading ? (
+          <p className="text-navy-900/70">Loading…</p>
+        ) : !history || history.orders.length === 0 ? (
+          <p className="text-navy-900/70 text-sm">No orders yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {history.orders.map((o) => (
+              <Link
+                key={o.id}
+                to={`/orders/${o.id}`}
+                className="bg-white rounded-card shadow-card p-4 block hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <p className="font-semibold text-navy-900 text-sm">{o.order_number}</p>
+                  <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${
+                    o.payment_percent >= 100 ? "bg-green-500/15 text-green-700" : "bg-navy-900/10 text-navy-900/70"
+                  }`}>
+                    {o.payment_percent.toFixed(0)}% paid
+                  </span>
+                </div>
+                <p className="text-xs text-navy-900/45 mb-1">{new Date(o.created_at).toLocaleDateString()}</p>
+                <p className="font-semibold text-navy-900 text-sm">₦{Number(o.total_amount).toLocaleString()}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="font-display font-bold text-navy-900 mb-1">Customers</h3>
+      <p className="text-xs text-navy-900/50 mb-4">
+        Every customer registered under you or one of your sales reps. View-only — payment
+        approval and order management are handled by admin.
+      </p>
+      {customers.length === 0 ? (
+        <p className="text-navy-900/70 text-sm">No customers in your hierarchy yet.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {customers.map((c) => (
+            <div
+              key={c.id}
+              onClick={() => openCustomer(c)}
+              className="bg-white rounded-card shadow-card p-4 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div>
+                <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
+                <p className="text-xs text-navy-900/70">
+                  {c.full_name}{c.email ? ` · ${c.email}` : ""} · {c.phone}
+                  {c.assigned_rep_name && ` · via ${c.assigned_rep_name}`}
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-navy-800">View →</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Read-only visibility (item 8) — every sales rep this true distributor
+// onboarded, with summary stats. No approve/suspend/remove action lives
+// here — same read-only guarantee as HierarchyCustomersTab above.
+function HierarchySalesRepsTab() {
+  const [reps, setReps] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listHierarchySalesReps().then(setReps).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+
+  return (
+    <div>
+      <h3 className="font-display font-bold text-navy-900 mb-1">Sales Reps</h3>
+      <p className="text-xs text-navy-900/50 mb-4">
+        Every sales rep you've onboarded. View-only — approval, suspension, and removal are
+        handled by admin.
+      </p>
+      {reps.length === 0 ? (
+        <p className="text-navy-900/70 text-sm">You haven't registered any sales reps yet.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {reps.map((r) => (
+            <div key={r.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-navy-900">{r.business_name || r.full_name}</p>
+                <p className="text-xs text-navy-900/70">{r.full_name} · {r.email} · {r.phone}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-navy-900">₦{Number(r.total_revenue).toLocaleString()}</p>
+                <p className="text-[11px] text-navy-900/50">{r.customer_count} customer{r.customer_count === "1" ? "" : "s"}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
