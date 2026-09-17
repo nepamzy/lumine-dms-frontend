@@ -152,14 +152,18 @@ function DistributorSimpleDashboard({ user }) {
   const [tab, setTab] = useState("overview");
   const [referral, setReferral] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [myCustomers, setMyCustomers] = useState([]);
+  const [placeOrderMode, setPlaceOrderMode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
       getMyReferral().then(setReferral).catch(() => setReferral(null)),
       listMyOrders().then(setOrders).catch(() => setOrders([])),
+      listMyCustomers().then(setMyCustomers).catch(() => setMyCustomers([])),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -181,25 +185,86 @@ function DistributorSimpleDashboard({ user }) {
       <p className="text-navy-900/70 text-sm mb-6">Distributor dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8 flex-wrap">
-        {["overview", "register-sales-rep", "register-customer"].map((t) => (
+        {["overview", "place-order", "register-sales-rep", "register-customer"].map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); setPlaceOrderMode(null); }}
             className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               tab === t
                 ? "border-gold-500 text-navy-900"
                 : "border-transparent text-navy-900/70 hover:text-navy-900"
             }`}
           >
-            {t === "overview" ? "Overview" : t === "register-sales-rep" ? "Register Sales Rep" : "Register Customer"}
+            {t === "overview"
+              ? "Overview"
+              : t === "place-order"
+              ? "Place Order"
+              : t === "register-sales-rep"
+              ? "Register Sales Rep"
+              : "Register Customer"}
           </button>
         ))}
       </div>
 
-      {tab === "register-sales-rep" ? (
+      {tab === "place-order" ? (
+        placeOrderMode === null ? (
+          <div className="flex flex-col sm:flex-row gap-4 max-w-lg">
+            <button
+              onClick={() => setPlaceOrderMode("customer")}
+              className="flex-1 bg-white rounded-card shadow-card p-6 text-left hover:shadow-md transition-shadow"
+            >
+              <p className="font-display font-bold text-navy-900 mb-1">Order for a Customer</p>
+              <p className="text-xs text-navy-900/70">
+                Pick from your customers who have their own account, and order on their behalf.
+              </p>
+            </button>
+            <button
+              onClick={() => navigate("/catalog")}
+              className="flex-1 bg-white rounded-card shadow-card p-6 text-left hover:shadow-md transition-shadow"
+            >
+              <p className="font-display font-bold text-navy-900 mb-1">Order for Myself</p>
+              <p className="text-xs text-navy-900/70">Buy at your own distributor pricing.</p>
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setPlaceOrderMode(null)}
+              className="text-xs font-semibold text-navy-800 underline self-start mb-1"
+            >
+              ← Back
+            </button>
+            {myCustomers.length === 0 ? (
+              <p className="text-navy-900/70 text-sm">
+                No customers assigned to you yet. Share your referral link, or register one from
+                the Register Customer tab.
+              </p>
+            ) : (
+              myCustomers.map((c) => (
+                <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
+                    <p className="text-xs text-navy-900/70">{c.full_name} · {c.email}</p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/catalog?forCustomer=${c.id}&forCustomerName=${encodeURIComponent(c.business_name || c.full_name)}`
+                      )
+                    }
+                    className="bg-gold-500 text-navy-900 text-xs font-bold px-4 py-2 rounded-md whitespace-nowrap"
+                  >
+                    Place Order
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )
+      ) : tab === "register-sales-rep" ? (
         <RegisterSalesRepForDistributor />
       ) : tab === "register-customer" ? (
-        <RegisterCustomerForRep />
+        <RegisterCustomerForRep onRegistered={() => listMyCustomers().then(setMyCustomers).catch(() => {})} />
       ) : loading ? (
         <p className="text-navy-900/70">Loading…</p>
       ) : (

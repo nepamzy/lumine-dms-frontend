@@ -18,9 +18,10 @@ export default function Customers() {
     setLoading(true);
     Promise.all([
       refresh(),
-      listDistributors("approved").then((rows) =>
-        setDistributors(rows.filter((d) => d.distributor_type !== "distributor"))
-      ),
+      // Both sales reps and true distributors are valid reassignment
+      // targets — a true distributor can now place orders on behalf of a
+      // customer assigned to them too, same as a sales rep always could.
+      listDistributors("approved").then(setDistributors),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -114,7 +115,7 @@ export default function Customers() {
                   <option value="">Unassigned</option>
                   {distributors.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.business_name || d.full_name}
+                      {d.business_name || d.full_name} ({d.distributor_type === "distributor" ? "Distributor" : "Sales Rep"})
                     </option>
                   ))}
                 </select>
