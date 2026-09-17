@@ -33,7 +33,8 @@ function StatCard({ label, value }) {
 export default function ActivityHistoryModal({ type, data, loading, onClose }) {
   const isDistributor = type === "distributor";
   const isSalesRep = isDistributor && data?.profile?.distributor_type === "sales_rep";
-  const [tab, setTab] = useState("orders"); // "orders" | "customers" — sales reps/distributors only
+  const isTrueDistributor = isDistributor && data?.profile?.distributor_type === "distributor";
+  const [tab, setTab] = useState("orders"); // "orders" | "customers" | "rep-customer-orders"
   const [customers, setCustomers] = useState(null);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [nestedCustomer, setNestedCustomer] = useState(null); // { id }
@@ -141,7 +142,66 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
               </div>
             )}
 
-            {tab === "customers" && isSalesRep ? (
+            {/* Own orders vs. their whole hierarchy's orders — true distributors only */}
+            {isTrueDistributor && (
+              <div className="flex gap-2 mb-4 border-b border-navy-900/10">
+                <button
+                  onClick={() => setTab("orders")}
+                  className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
+                    tab === "orders" ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/40"
+                  }`}
+                >
+                  Own Orders
+                </button>
+                <button
+                  onClick={() => setTab("rep-customer-orders")}
+                  className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
+                    tab === "rep-customer-orders" ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/40"
+                  }`}
+                >
+                  Sales Rep / Customer Orders ({data.repCustomerOrders?.length ?? 0})
+                </button>
+              </div>
+            )}
+
+            {tab === "rep-customer-orders" && isTrueDistributor ? (
+              <div>
+                <h4 className="font-display font-bold text-navy-900 mb-1">Sales Rep / Customer Orders</h4>
+                <p className="text-xs text-navy-900/45 mb-3">
+                  Every order from a customer or sales rep registered under this distributor —
+                  payment for these splits straight to their Paystack subaccount.
+                </p>
+                {!data.repCustomerOrders || data.repCustomerOrders.length === 0 ? (
+                  <p className="text-sm text-navy-900/70">No orders from their customers or sales reps yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {data.repCustomerOrders.map((o) => (
+                      <Link
+                        key={o.id}
+                        to={`/orders/${o.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="border border-navy-900/10 rounded-md p-3 flex items-center justify-between hover:shadow-md transition-shadow"
+                      >
+                        <div>
+                          <p className="font-semibold text-navy-900 text-sm">{o.order_number}</p>
+                          <p className="text-xs text-navy-900/45">
+                            {o.customer_business_name || o.customer_full_name}
+                            {o.placed_by_name && o.placed_by_name !== o.customer_full_name ? ` · placed by ${o.placed_by_name}` : ""}
+                            {" · "}
+                            {new Date(o.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <PaymentBadge percent={o.payment_percent} />
+                          <span className="font-semibold text-navy-900 text-xs">₦{Number(o.total_amount).toLocaleString()}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : tab === "customers" && isSalesRep ? (
               <div>
                 <h4 className="font-display font-bold text-navy-900 mb-3">Customers</h4>
                 {customersLoading ? (
