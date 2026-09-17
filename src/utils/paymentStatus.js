@@ -32,7 +32,8 @@ export function getOrderListBadge(percent) {
 
 // The minimum percent a buyer must reach on their current order(s) before
 // they're allowed to place a new one. Mirrors the backend's own gating so
-// the UI can warn proactively instead of just showing a server error.
-export function getNextOrderThreshold(buyerKind) {
-  return buyerKind === "distributor" ? 85 : 100;
+// the UI can warn proactively instead of just showing a server error —
+// 100% for every buyer type, no carve-outs.
+export function getNextOrderThreshold() {
+  return 100;
 }
