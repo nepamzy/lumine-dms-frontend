@@ -11,6 +11,10 @@ import {
   listTrackRecordCustomers,
   getCustomerHistoryForRep,
   pingCustomer,
+  listPayoutBanks,
+  resolveBankAccount,
+  confirmPayoutAccount,
+  getPayoutAccountStatus,
 } from "../api/distributor";
 import { getPaymentBand, getPaymentBandStyles, getOrderListBadge } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
@@ -185,7 +189,7 @@ function DistributorSimpleDashboard({ user }) {
       <p className="text-navy-900/70 text-sm mb-6">Distributor dashboard</p>
 
       <div className="flex gap-1 border-b border-navy-900/10 mb-8 flex-wrap">
-        {["overview", "place-order", "register-sales-rep", "register-customer"].map((t) => (
+        {["overview", "place-order", "register-sales-rep", "register-customer", "payout-account"].map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setPlaceOrderMode(null); }}
@@ -201,12 +205,16 @@ function DistributorSimpleDashboard({ user }) {
               ? "Place Order"
               : t === "register-sales-rep"
               ? "Register Sales Rep"
-              : "Register Customer"}
+              : t === "register-customer"
+              ? "Register Customer"
+              : "Payout Account"}
           </button>
         ))}
       </div>
 
-      {tab === "place-order" ? (
+      {tab === "payout-account" ? (
+        <PayoutAccountTab />
+      ) : tab === "place-order" ? (
         placeOrderMode === null ? (
           <div className="flex flex-col sm:flex-row gap-4 max-w-lg">
             <button
@@ -426,6 +434,146 @@ function RegisterSalesRepForDistributor() {
         {submitting ? "Registering…" : "Register Sales Rep"}
       </button>
     </form>
+  );
+}
+
+// Two-step bank account setup: pick a bank + enter account number, tap
+// Verify to see the resolved account holder name (free, no side effects —
+// nothing is created yet), then Confirm to actually register it as the
+// Paystack subaccount payments from this distributor's customers/reps will
+// split 100% into. Re-verifying with different details always starts the
+// confirm step over, so a distributor can never confirm a name they didn't
+// actually see resolved for the details currently in the form.
+function PayoutAccountTab() {
+  const [status, setStatus] = useState(null);
+  const [banks, setBanks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [bankCode, setBankCode] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [resolved, setResolved] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([getPayoutAccountStatus(), listPayoutBanks()])
+      .then(([s, b]) => {
+        setStatus(s);
+        setBanks(b);
+      })
+      .catch((err) => setLoadError(err.response?.data?.message || "Couldn't load payout account settings."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setResolved(null);
+    setVerifying(true);
+    try {
+      const result = await resolveBankAccount(bankCode, accountNumber);
+      setResolved(result);
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't verify that account. Please check the details and try again.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    setError(null);
+    setConfirming(true);
+    try {
+      await confirmPayoutAccount(bankCode, accountNumber);
+      const s = await getPayoutAccountStatus();
+      setStatus(s);
+      setResolved(null);
+      setSuccess("Payout account saved. Payments from your customers and sales reps will now come straight to this account.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't save this payout account. Please try again.");
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  if (loading) return <p className="text-navy-900/70">Loading…</p>;
+  if (loadError) return <p className="text-status-danger text-sm">{loadError}</p>;
+
+  return (
+    <div className="flex flex-col gap-5 max-w-lg">
+      <div className="bg-white rounded-card shadow-card p-6">
+        <h3 className="font-display font-bold text-navy-900 mb-1">Payout account</h3>
+        <p className="text-sm text-navy-900/70 mb-4">
+          Payments from customers and sales reps registered under you are paid out straight
+          to this bank account — never held by Lumine and paid out later.
+        </p>
+        {status?.configured ? (
+          <div className="bg-green-500/10 text-green-700 rounded-md px-4 py-3 text-sm">
+            <p className="font-semibold">{status.accountName}</p>
+            <p>
+              {banks.find((b) => b.code === status.settlementBank)?.name || status.settlementBank} ·{" "}
+              {status.accountNumber}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-navy-900/50">Not set up yet — your customers and reps can't pay online until you do.</p>
+        )}
+      </div>
+
+      <form onSubmit={handleVerify} className="bg-white rounded-card shadow-card p-6 flex flex-col gap-4">
+        <h3 className="font-display font-bold text-navy-900 mb-1">
+          {status?.configured ? "Change payout account" : "Set up your payout account"}
+        </h3>
+        <select
+          required
+          value={bankCode}
+          onChange={(e) => { setBankCode(e.target.value); setResolved(null); setSuccess(null); }}
+          className="input"
+        >
+          <option value="">Select bank</option>
+          {banks.map((b) => (
+            <option key={b.code} value={b.code}>{b.name}</option>
+          ))}
+        </select>
+        <input
+          required
+          placeholder="Account number"
+          value={accountNumber}
+          onChange={(e) => { setAccountNumber(e.target.value); setResolved(null); setSuccess(null); }}
+          className="input"
+        />
+        {error && <p className="text-status-danger text-sm">{error}</p>}
+        {success && <p className="text-status-success text-sm">{success}</p>}
+        {resolved ? (
+          <div className="flex flex-col gap-3">
+            <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 text-sm">
+              <p className="font-semibold">{resolved.accountName}</p>
+              <p className="text-xs">Is this you? Confirm to start receiving payments here.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={confirming}
+              className="bg-gold-500 text-navy-900 font-bold py-3 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
+            >
+              {confirming ? "Saving…" : "Confirm & Save"}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="submit"
+            disabled={verifying || !bankCode || !accountNumber}
+            className="bg-white border border-gold-500 text-gold-700 font-bold py-3 rounded-md hover:bg-gold-500/10 transition-colors disabled:opacity-50"
+          >
+            {verifying ? "Verifying…" : "Verify"}
+          </button>
+        )}
+      </form>
+    </div>
   );
 }
 

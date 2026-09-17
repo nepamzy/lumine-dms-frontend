@@ -35,3 +35,26 @@ export async function pingCustomer(customerId, orderId) {
   const { data } = await api.post(`/admin/distributors/me/track-record/${customerId}/ping`, { orderId });
   return data;
 }
+
+// Payout account setup (true distributors only) — list banks for the
+// picker, resolve an account number to its holder's name (free, no side
+// effects), then confirm to actually create the Paystack subaccount.
+export async function listPayoutBanks() {
+  const { data } = await api.get("/admin/distributors/me/banks");
+  return data.data;
+}
+
+export async function resolveBankAccount(bankCode, accountNumber) {
+  const { data } = await api.post("/admin/distributors/me/bank/resolve", { bankCode, accountNumber });
+  return data.data;
+}
+
+export async function confirmPayoutAccount(bankCode, accountNumber) {
+  const { data } = await api.post("/admin/distributors/me/subaccount", { bankCode, accountNumber });
+  return data.data;
+}
+
+export async function getPayoutAccountStatus() {
+  const { data } = await api.get("/admin/distributors/me/payout-account");
+  return data.data;
+}
