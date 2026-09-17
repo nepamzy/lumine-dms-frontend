@@ -22,6 +22,7 @@ import {
 import { getPaymentBand, getPaymentBandStyles, getOrderListBadge } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
 import PasswordInput from "../components/PasswordInput";
+import SalesRepOrderModal from "../components/SalesRepOrderModal";
 import STATE_LGAS from "../data/nigeria-states-lgas.json";
 
 const NIGERIAN_STATES = Object.keys(STATE_LGAS);
@@ -760,6 +761,7 @@ function PaymentStandingTab() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [pinging, setPingingId] = useState(null);
   const [pingSent, setPingSentId] = useState(null);
+  const [viewingOrderId, setViewingOrderId] = useState(null);
 
   const refresh = () => listTrackRecordCustomers().then(setCustomers).finally(() => setLoading(false));
 
@@ -831,20 +833,31 @@ function PaymentStandingTab() {
                       <p>Paid: ₦{Number(o.paid_amount).toLocaleString()}</p>
                       <p>Remaining: ₦{remaining.toLocaleString()}</p>
                     </div>
-                    {o.payment_percent < 100 && (
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handlePing(o)}
-                        disabled={pinging === o.id}
-                        className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        onClick={() => setViewingOrderId(o.id)}
+                        className="text-navy-800 text-xs font-semibold underline whitespace-nowrap"
                       >
-                        {pinging === o.id ? "Sending…" : pingSent === o.id ? "Sent ✓" : "Ping"}
+                        Full details
                       </button>
-                    )}
+                      {o.payment_percent < 100 && (
+                        <button
+                          onClick={() => handlePing(o)}
+                          disabled={pinging === o.id}
+                          className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {pinging === o.id ? "Sending…" : pingSent === o.id ? "Sent ✓" : "Ping"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+        )}
+        {viewingOrderId && (
+          <SalesRepOrderModal orderId={viewingOrderId} onClose={() => setViewingOrderId(null)} />
         )}
       </div>
     );
@@ -930,6 +943,7 @@ function TrackRecordTab() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [pinging, setPingingId] = useState(null);
   const [pingSent, setPingSentId] = useState(null);
+  const [viewingOrderId, setViewingOrderId] = useState(null);
 
   useEffect(() => {
     listTrackRecordCustomers().then(setCustomers).finally(() => setLoading(false));
@@ -1002,20 +1016,31 @@ function TrackRecordTab() {
                       <p>Paid: ₦{Number(o.paid_amount).toLocaleString()}</p>
                       <p>Remaining: ₦{remaining.toLocaleString()}</p>
                     </div>
-                    {o.payment_percent < 100 && (
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handlePing(o)}
-                        disabled={pinging === o.id}
-                        className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        onClick={() => setViewingOrderId(o.id)}
+                        className="text-navy-800 text-xs font-semibold underline whitespace-nowrap"
                       >
-                        {pinging === o.id ? "Sending…" : pingSent === o.id ? "Sent ✓" : "Ping"}
+                        Full details
                       </button>
-                    )}
+                      {o.payment_percent < 100 && (
+                        <button
+                          onClick={() => handlePing(o)}
+                          disabled={pinging === o.id}
+                          className="bg-gold-500 text-navy-900 text-xs font-bold px-3 py-2 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {pinging === o.id ? "Sending…" : pingSent === o.id ? "Sent ✓" : "Ping"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+        )}
+        {viewingOrderId && (
+          <SalesRepOrderModal orderId={viewingOrderId} onClose={() => setViewingOrderId(null)} />
         )}
       </div>
     );
@@ -1141,6 +1166,7 @@ function SalesRepDashboard({ user, roleLabel }) {
   const [myCustomers, setMyCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [viewingOrderId, setViewingOrderId] = useState(null);
   const navigate = useNavigate();
 
   const refreshRoute = () => getMyRoute().then(setRoute);
@@ -1332,21 +1358,38 @@ function SalesRepDashboard({ user, roleLabel }) {
         <ExpiringBatchesList />
       ) : (
         <div className="flex flex-col gap-3">
-          {orders.map((o) => (
-            <div key={o.id} className="bg-white rounded-card shadow-card p-4 flex justify-between items-center">
-              <div>
-                <p className="font-semibold text-navy-900">{o.order_number}</p>
-                <p className="text-xs text-navy-900/70">{new Date(o.created_at).toLocaleDateString()}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-navy-800">₦{Number(o.total_amount).toLocaleString()}</p>
-                <p className="text-xs text-navy-900/70">
-                  {o.status === "pending" ? "Order Confirmed" : o.status.replace(/_/g, " ")}
-                </p>
-              </div>
-            </div>
-          ))}
+          {orders.length === 0 ? (
+            <p className="text-navy-900/70 text-sm">No orders yet.</p>
+          ) : (
+            orders.map((o) => {
+              const badge = getOrderListBadge(o.paymentPercent);
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => setViewingOrderId(o.id)}
+                  className="bg-white rounded-card shadow-card p-4 flex justify-between items-center text-left hover:shadow-md transition-shadow"
+                >
+                  <div>
+                    <p className="font-semibold text-navy-900">{o.order_number}</p>
+                    <p className="text-xs text-navy-900/70">
+                      {o.customer_name} · {new Date(o.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-navy-800 mb-1">₦{Number(o.total_amount).toLocaleString()}</p>
+                    <span className={`text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${badge.bg} ${badge.text}`}>
+                      {badge.label}
+                    </span>
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
+      )}
+
+      {viewingOrderId && (
+        <SalesRepOrderModal orderId={viewingOrderId} onClose={() => { setViewingOrderId(null); refreshOrders(); }} />
       )}
     </div>
   );
