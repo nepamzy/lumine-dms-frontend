@@ -35,7 +35,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // The refresh call itself is deliberately excluded here — retrying a
+    // failed refresh by calling refresh again is circular and used to
+    // deadlock: the retry awaits `refreshPromise`, but the failing refresh
+    // call IS `refreshPromise`, so it was awaiting its own settlement and
+    // never resolved. A 401 from /auth/refresh just means "not logged in,"
+    // which should fall straight through to the plain rejection below.
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh")) {
       originalRequest._retry = true;
       try {
         // Multiple simultaneous 401s should only trigger one refresh call
