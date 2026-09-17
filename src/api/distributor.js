@@ -15,6 +15,12 @@ export async function registerCustomerForRep(payload) {
   return data.data;
 }
 
+// Distributor-only — onboards a new sales rep directly, auto-approved.
+export async function registerSalesRepForDistributor(payload) {
+  const { data } = await api.post("/admin/distributors/me/sales-reps/register", payload);
+  return data.data;
+}
+
 export async function listTrackRecordCustomers() {
   const { data } = await api.get("/admin/distributors/me/track-record");
   return data.data;

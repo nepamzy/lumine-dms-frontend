@@ -7,12 +7,14 @@ import {
   getMyReferral,
   listMyCustomers,
   registerCustomerForRep,
+  registerSalesRepForDistributor,
   listTrackRecordCustomers,
   getCustomerHistoryForRep,
   pingCustomer,
 } from "../api/distributor";
 import { getPaymentBand, getPaymentBandStyles, getOrderListBadge } from "../utils/paymentStatus";
 import ExpiringBatchesList from "../components/ExpiringBatchesList";
+import PasswordInput from "../components/PasswordInput";
 import STATE_LGAS from "../data/nigeria-states-lgas.json";
 
 const NIGERIAN_STATES = Object.keys(STATE_LGAS);
@@ -143,10 +145,11 @@ export default function DistributorDashboard() {
   return <SalesRepDashboard user={user} roleLabel={roleLabel} />;
 }
 
-// The "true" distributor: buys at discount, has a cart, and can refer other
-// distributors — but only sees a headcount, not a managed list (unlike a
-// Sales Rep, who sees each attached customer individually).
+// The "true" distributor: buys at discount, has a cart, can refer other
+// distributors, and — new — can directly onboard their own sales reps and
+// customers, mirroring what a sales rep could already do for customers.
 function DistributorSimpleDashboard({ user }) {
+  const [tab, setTab] = useState("overview");
   const [referral, setReferral] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,9 +178,29 @@ function DistributorSimpleDashboard({ user }) {
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">
         Welcome, {user?.full_name?.split(" ")[0]}
       </h1>
-      <p className="text-navy-900/70 text-sm mb-8">Distributor dashboard</p>
+      <p className="text-navy-900/70 text-sm mb-6">Distributor dashboard</p>
 
-      {loading ? (
+      <div className="flex gap-1 border-b border-navy-900/10 mb-8 flex-wrap">
+        {["overview", "register-sales-rep", "register-customer"].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+              tab === t
+                ? "border-gold-500 text-navy-900"
+                : "border-transparent text-navy-900/70 hover:text-navy-900"
+            }`}
+          >
+            {t === "overview" ? "Overview" : t === "register-sales-rep" ? "Register Sales Rep" : "Register Customer"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "register-sales-rep" ? (
+        <RegisterSalesRepForDistributor />
+      ) : tab === "register-customer" ? (
+        <RegisterCustomerForRep />
+      ) : loading ? (
         <p className="text-navy-900/70">Loading…</p>
       ) : (
         <div className="flex flex-col gap-5">
@@ -257,6 +280,87 @@ function DistributorSimpleDashboard({ user }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Distributor-only — onboards a new sales rep directly. Unlike registering
+// a customer (a contact record only), this creates a REAL account the new
+// rep can log in with right away (auto-approved), so it collects the same
+// fields a self-signup would.
+function RegisterSalesRepForDistributor() {
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    state: "Lagos",
+    localGovernment: STATE_LGAS["Lagos"][0],
+    businessName: "",
+    address: "",
+  });
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const updateState = (e) => {
+    const newState = e.target.value;
+    setForm((f) => ({ ...f, state: newState, localGovernment: STATE_LGAS[newState]?.[0] || "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setSubmitting(true);
+    try {
+      await registerSalesRepForDistributor(form);
+      setSuccess(`${form.fullName} can sign in right away with the password you set.`);
+      setForm((f) => ({ ...f, fullName: "", email: "", phone: "", password: "", businessName: "", address: "" }));
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't register this sales rep.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-card shadow-card p-6 flex flex-col gap-4 max-w-lg">
+      <p className="text-sm text-navy-900/70">
+        Onboard a new sales rep to work under you. Unlike a customer, they get a real
+        account and can sign in immediately — no separate admin approval needed, since
+        you're vouching for them. Set a password they can start with; they can change it
+        later from their own profile.
+      </p>
+      <input required placeholder="Full name" value={form.fullName} onChange={update("fullName")} className="input" />
+      <input required type="email" placeholder="Email" value={form.email} onChange={update("email")} className="input" />
+      <input required placeholder="Phone" value={form.phone} onChange={update("phone")} className="input" />
+      <PasswordInput required minLength={8} placeholder="Password (min 8 characters)" value={form.password} onChange={update("password")} />
+      <input placeholder="Business name (optional)" value={form.businessName} onChange={update("businessName")} className="input" />
+      <div className="flex gap-2">
+        <select value={form.state} onChange={updateState} className="input flex-1">
+          {NIGERIAN_STATES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select value={form.localGovernment} onChange={update("localGovernment")} className="input flex-1">
+          {(STATE_LGAS[form.state] || []).map((lga) => (
+            <option key={lga} value={lga}>{lga}</option>
+          ))}
+        </select>
+      </div>
+      <textarea placeholder="Address (optional)" value={form.address} onChange={update("address")} className="input" rows={2} />
+      {error && <p className="text-status-danger text-sm">{error}</p>}
+      {success && <p className="text-status-success text-sm">{success}</p>}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="bg-gold-500 text-navy-900 font-bold py-3 rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
+      >
+        {submitting ? "Registering…" : "Register Sales Rep"}
+      </button>
+    </form>
   );
 }
 
