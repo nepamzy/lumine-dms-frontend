@@ -2,6 +2,7 @@ import { useState } from "react";
 import { getPaymentBand, getPaymentBandStyles } from "../utils/paymentStatus";
 import { initializePayment, logPayment, verifyPayment } from "../api/orders";
 import { downloadPaymentReceipt, downloadOrderReceipt } from "../utils/receipt";
+import { grossUpForPaystackFee } from "../utils/paystackFee";
 
 const STATUS_LABELS = {
   pending: "Awaiting confirmation",
@@ -51,6 +52,16 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
     order.buyerKind === "distributor" ? 85 : order.buyerKind === "customer" ? 60 : null;
   const firstPaymentMinAmount = firstPaymentMinPercent ? (firstPaymentMinPercent / 100) * Number(order.total_amount) : 0;
   const showFirstPaymentHint = firstPaymentMinPercent && order.payment.totalPaid === 0;
+
+  // This order's buyer chain belongs to a distributor — payment splits
+  // 100% to their Paystack subaccount, and (see payment.service.js) the
+  // charge is grossed up so the buyer, not the distributor, covers
+  // Paystack's fee. Mirrored here purely for display, so the buyer sees
+  // the real total before redirecting to Paystack.
+  const isSplitPayment = !!order.registered_under_distributor_id;
+  const enteredAmount = Number(amount);
+  const estimatedCharge = enteredAmount > 0 ? grossUpForPaystackFee(enteredAmount) : 0;
+  const estimatedFee = estimatedCharge - enteredAmount;
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -256,6 +267,35 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
             onChange={(e) => setAmount(e.target.value)}
             className="input text-sm"
           />
+
+          {enteredAmount > 0 && (
+            isSplitPayment ? (
+              <div className="bg-navy-900/[0.03] rounded-md px-3 py-2.5 text-xs text-navy-900/80 flex flex-col gap-1">
+                <div className="flex justify-between">
+                  <span>Amount toward your order</span>
+                  <span className="font-semibold">₦{enteredAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Paystack processing fee (est.)</span>
+                  <span className="font-semibold">₦{estimatedFee.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-t border-navy-900/10 pt-1 mt-0.5 text-navy-900">
+                  <span className="font-semibold">You'll be charged</span>
+                  <span className="font-bold">₦{estimatedCharge.toLocaleString()}</span>
+                </div>
+                <p className="text-[10px] text-navy-900/50 mt-0.5">
+                  This estimate is final Paystack-side. The exact fee depends on how you pay.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-navy-900/50 bg-navy-900/[0.03] rounded-md px-3 py-2">
+                If you pay by bank transfer, Paystack adds its own small processing fee
+                (typically ~1.5% + ₦100) on top of ₦{enteredAmount.toLocaleString()} — charged
+                directly by Paystack, not Lumine. Other payment methods don't add anything extra.
+              </p>
+            )
+          )}
+
           {error && <p className="text-status-danger text-xs">{error}</p>}
           <button
             type="submit"
