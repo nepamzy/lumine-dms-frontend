@@ -86,7 +86,7 @@ export default function Customers() {
                   )}
                 </p>
                 <p className="text-xs text-navy-900/70">
-                  {c.full_name} · {c.email} · {c.phone}
+                  {c.full_name}{c.email ? ` · ${c.email}` : ""} · {c.phone}
                 </p>
                 <p className="text-xs text-navy-900/70">
                   {c.delivery_address ? `${c.delivery_address}, ` : ""}

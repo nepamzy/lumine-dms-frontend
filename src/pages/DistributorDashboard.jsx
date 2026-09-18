@@ -264,7 +264,7 @@ function DistributorSimpleDashboard({ user }) {
                 <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
-                    <p className="text-xs text-navy-900/70">{c.full_name} · {c.email}</p>
+                    <p className="text-xs text-navy-900/70">{c.full_name}{c.email ? ` · ${c.email}` : ""}</p>
                   </div>
                   <button
                     onClick={() =>
@@ -632,7 +632,7 @@ function HierarchyCustomersTab() {
           {selected.business_name || selected.full_name}
         </h3>
         <p className="text-xs text-navy-900/70 mb-5">
-          {selected.full_name} · {selected.email} · {selected.phone}
+          {selected.full_name}{selected.email ? ` · ${selected.email}` : ""} · {selected.phone}
         </p>
         {historyLoading ? (
           <p className="text-navy-900/70">Loading…</p>
@@ -1331,7 +1331,7 @@ function SalesRepDashboard({ user, roleLabel }) {
                 <div key={c.id} className="bg-white rounded-card shadow-card p-4 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-navy-900">{c.business_name || c.full_name}</p>
-                    <p className="text-xs text-navy-900/70">{c.full_name} · {c.email}</p>
+                    <p className="text-xs text-navy-900/70">{c.full_name}{c.email ? ` · ${c.email}` : ""}</p>
                   </div>
                   <button
                     onClick={() =>

@@ -79,7 +79,7 @@ function UsersTab() {
               {r.distributor_business_name || r.customer_business_name || r.full_name}
             </p>
             <p className="text-xs text-navy-900/70">
-              {r.full_name} · {r.email} · {r.phone}
+              {r.full_name}{r.email ? ` · ${r.email}` : ""} · {r.phone}
             </p>
           </div>
           <div className="flex items-center gap-3">

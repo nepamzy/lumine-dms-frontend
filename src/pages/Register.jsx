@@ -127,8 +127,14 @@ export default function Register() {
         <Field label="Full name">
           <input required value={form.fullName} onChange={update("fullName")} className="input" />
         </Field>
-        <Field label="Email">
-          <input type="email" required value={form.email} onChange={update("email")} className="input" />
+        <Field label={kind === "customer" ? "Email (optional)" : "Email"}>
+          <input
+            type="email"
+            required={kind !== "customer"}
+            value={form.email}
+            onChange={update("email")}
+            className="input"
+          />
         </Field>
         <Field label="Phone">
           <input required value={form.phone} onChange={update("phone")} className="input" placeholder="08012345678" />

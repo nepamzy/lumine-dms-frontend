@@ -36,11 +36,11 @@ export default function Login() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="login-email" className="text-xs font-semibold text-navy-900/70 block mb-1">
-            Email
+            Email or Phone
           </label>
           <input
             id="login-email"
-            type="email"
+            type="text"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}

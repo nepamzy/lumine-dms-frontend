@@ -81,7 +81,10 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
             {/* Profile summary */}
             <div className="text-sm text-navy-900/70 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
               <p><span className="text-navy-900/45">Contact:</span> {data.profile.full_name}</p>
-              <p><span className="text-navy-900/45">Email:</span> {data.profile.email}</p>
+              <p>
+                <span className="text-navy-900/45">Email:</span>{" "}
+                {data.profile.email || <span className="text-navy-900/30 italic">Not provided</span>}
+              </p>
               <p><span className="text-navy-900/45">Phone:</span> {data.profile.phone}</p>
               <p className="sm:col-span-2">
                 <span className="text-navy-900/45">Address:</span>{" "}
@@ -226,7 +229,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                             )}
                           </p>
                           <p className="text-xs text-navy-900/45">
-                            {c.full_name} · {c.email} · {c.state}
+                            {c.full_name}{c.email ? ` · ${c.email}` : ""} · {c.state}
                           </p>
                         </div>
                         <span className="text-xs font-semibold text-navy-800">View orders →</span>

@@ -28,17 +28,18 @@ export default function ForgotPassword() {
       <Seo title="Forgot Password" description="Reset your Lumine account password." path="/forgot-password" />
       <h1 className="font-display font-bold text-2xl text-navy-900 mb-1">Forgot your password?</h1>
       <p className="text-navy-900/70 text-sm mb-8">
-        Enter the email you signed up with. We'll send a reset code to the email and phone number on file.
+        Enter the email or phone number you signed up with. We'll send a reset code to whichever
+        contact methods are on file.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="fp-email" className="text-xs font-semibold text-navy-900/70 block mb-1">
-            Email
+            Email or Phone
           </label>
           <input
             id="fp-email"
-            type="email"
+            type="text"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
