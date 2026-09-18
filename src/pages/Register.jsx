@@ -57,33 +57,23 @@ export default function Register() {
   // so the new customer auto-attaches to that distributor on creation.
   const referralCode = searchParams.get("ref") || null;
 
-  // Location is requested (via the browser's own permission prompt) at
-  // signup for Customer and Sales Rep accounts, but it's optional —
-  // granting, denying, or dismissing that browser prompt never blocks
-  // account creation.
-  const getLocation = () => {
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        resolve({ latitude: null, longitude: null });
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => resolve({ latitude: null, longitude: null }), // denied/failed — signup proceeds anyway
-        { timeout: 8000 }
-      );
-    });
-  };
-
+  // Location is no longer requested during signup itself — triggering the
+  // browser's geolocation permission prompt synchronously on submit was
+  // blocking (and sometimes derailing) account creation for anyone opening
+  // a shared referral link inside an in-app browser (WhatsApp, Instagram,
+  // etc.), several of which respond to a geolocation request by popping
+  // their own "continue in your browser" prompt mid-signup. Location is
+  // still captured — just afterward, once logged in, via the friendlier,
+  // explicitly user-initiated, fully skippable LocationConsentGate popup
+  // (components/LocationConsentGate.jsx), which every role already sees.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const { latitude, longitude } = await getLocation();
       const role = kind === "customer" ? "customer" : "distributor";
       const distributorType = kind === "distributor" ? "distributor" : kind === "sales_rep" ? "sales_rep" : undefined;
-      const result = await register({ ...form, role, distributorType, latitude, longitude, referralCode });
+      const result = await register({ ...form, role, distributorType, referralCode });
       setSuccess(result.message || "Account created. You can now sign in.");
       setTimeout(() => navigate("/login"), 1800);
     } catch (err) {
