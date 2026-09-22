@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { listCustomers, getCustomerHistory } from "../api/admin";
+import { listCustomers, getCustomerHistory, getDistributorHierarchySalesReps, getDistributorHierarchyCustomers } from "../api/admin";
 import { packLabelFor } from "../utils/packSizes";
 
 function PaymentBadge({ percent }) {
@@ -34,9 +34,13 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
   const isDistributor = type === "distributor";
   const isSalesRep = isDistributor && data?.profile?.distributor_type === "sales_rep";
   const isTrueDistributor = isDistributor && data?.profile?.distributor_type === "distributor";
-  const [tab, setTab] = useState("orders"); // "orders" | "customers" | "rep-customer-orders"
+  const [tab, setTab] = useState("orders"); // "orders" | "customers" | "rep-customer-orders" | "hierarchy-reps" | "hierarchy-customers"
   const [customers, setCustomers] = useState(null);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [hierarchyReps, setHierarchyReps] = useState(null);
+  const [hierarchyRepsLoading, setHierarchyRepsLoading] = useState(false);
+  const [hierarchyCustomers, setHierarchyCustomers] = useState(null);
+  const [hierarchyCustomersLoading, setHierarchyCustomersLoading] = useState(false);
   const [nestedCustomer, setNestedCustomer] = useState(null); // { id }
   const [nestedData, setNestedData] = useState(null);
   const [nestedLoading, setNestedLoading] = useState(false);
@@ -49,6 +53,33 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
       setCustomers(await listCustomers(data.profile.id));
     } finally {
       setCustomersLoading(false);
+    }
+  };
+
+  // The distributor's own roster — every sales rep they onboarded — as
+  // opposed to the existing "Sales Rep / Customer Orders" tab, which is
+  // order-based and only shows people who've actually placed one.
+  const openHierarchyRepsTab = async () => {
+    setTab("hierarchy-reps");
+    if (hierarchyReps !== null) return;
+    setHierarchyRepsLoading(true);
+    try {
+      setHierarchyReps(await getDistributorHierarchySalesReps(data.profile.id));
+    } finally {
+      setHierarchyRepsLoading(false);
+    }
+  };
+
+  // Every real customer anywhere in this distributor's hierarchy — assigned
+  // directly to them, or to one of their sales reps.
+  const openHierarchyCustomersTab = async () => {
+    setTab("hierarchy-customers");
+    if (hierarchyCustomers !== null) return;
+    setHierarchyCustomersLoading(true);
+    try {
+      setHierarchyCustomers(await getDistributorHierarchyCustomers(data.profile.id));
+    } finally {
+      setHierarchyCustomersLoading(false);
     }
   };
 
@@ -147,7 +178,7 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
 
             {/* Own orders vs. their whole hierarchy's orders — true distributors only */}
             {isTrueDistributor && (
-              <div className="flex gap-2 mb-4 border-b border-navy-900/10">
+              <div className="flex gap-2 mb-4 border-b border-navy-900/10 flex-wrap">
                 <button
                   onClick={() => setTab("orders")}
                   className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
@@ -164,10 +195,85 @@ export default function ActivityHistoryModal({ type, data, loading, onClose }) {
                 >
                   Sales Rep / Customer Orders ({data.repCustomerOrders?.length ?? 0})
                 </button>
+                <button
+                  onClick={openHierarchyRepsTab}
+                  className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
+                    tab === "hierarchy-reps" ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/40"
+                  }`}
+                >
+                  Sales Reps{hierarchyReps ? ` (${hierarchyReps.length})` : ""}
+                </button>
+                <button
+                  onClick={openHierarchyCustomersTab}
+                  className={`text-sm font-semibold px-3 py-2 border-b-2 -mb-px ${
+                    tab === "hierarchy-customers" ? "border-gold-500 text-navy-900" : "border-transparent text-navy-900/40"
+                  }`}
+                >
+                  Customers{hierarchyCustomers ? ` (${hierarchyCustomers.length})` : ""}
+                </button>
               </div>
             )}
 
-            {tab === "rep-customer-orders" && isTrueDistributor ? (
+
+            {tab === "hierarchy-reps" && isTrueDistributor ? (
+              <div>
+                <h4 className="font-display font-bold text-navy-900 mb-1">Sales Reps</h4>
+                <p className="text-xs text-navy-900/45 mb-3">
+                  Every sales rep this distributor has onboarded.
+                </p>
+                {hierarchyRepsLoading ? (
+                  <p className="text-sm text-navy-900/70">Loading sales reps…</p>
+                ) : !hierarchyReps || hierarchyReps.length === 0 ? (
+                  <p className="text-sm text-navy-900/70">No sales reps onboarded yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {hierarchyReps.map((r) => (
+                      <div key={r.id} className="border border-navy-900/10 rounded-md p-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-navy-900 text-sm">{r.business_name || r.full_name}</p>
+                          <p className="text-xs text-navy-900/45">{r.full_name} · {r.email} · {r.phone}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-semibold text-navy-900">₦{Number(r.total_revenue).toLocaleString()}</p>
+                          <p className="text-[11px] text-navy-900/45">{r.customer_count} customer{r.customer_count === "1" ? "" : "s"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : tab === "hierarchy-customers" && isTrueDistributor ? (
+              <div>
+                <h4 className="font-display font-bold text-navy-900 mb-1">Customers</h4>
+                <p className="text-xs text-navy-900/45 mb-3">
+                  Every real customer in this distributor's hierarchy — assigned directly to them, or to one of their sales reps.
+                </p>
+                {hierarchyCustomersLoading ? (
+                  <p className="text-sm text-navy-900/70">Loading customers…</p>
+                ) : !hierarchyCustomers || hierarchyCustomers.length === 0 ? (
+                  <p className="text-sm text-navy-900/70">No customers in this distributor's hierarchy yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {hierarchyCustomers.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => openNestedCustomer(c.id)}
+                        className="border border-navy-900/10 rounded-md p-3 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                      >
+                        <div>
+                          <p className="font-semibold text-navy-900 text-sm">{c.business_name || c.full_name}</p>
+                          <p className="text-xs text-navy-900/45">
+                            {c.full_name}{c.email ? ` · ${c.email}` : ""} · {c.phone}
+                            {c.assigned_rep_name && ` · via ${c.assigned_rep_name}`}
+                          </p>
+                        </div>
+                        <span className="text-xs font-semibold text-navy-800">View orders →</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : tab === "rep-customer-orders" && isTrueDistributor ? (
               <div>
                 <h4 className="font-display font-bold text-navy-900 mb-1">Sales Rep / Customer Orders</h4>
                 <p className="text-xs text-navy-900/45 mb-3">

@@ -142,6 +142,16 @@ export async function getDistributorHistory(distributorId) {
   return data.data;
 }
 
+export async function getDistributorHierarchySalesReps(distributorId) {
+  const { data } = await api.get(`/admin/distributors/${distributorId}/hierarchy/sales-reps`);
+  return data.data;
+}
+
+export async function getDistributorHierarchyCustomers(distributorId) {
+  const { data } = await api.get(`/admin/distributors/${distributorId}/hierarchy/customers`);
+  return data.data;
+}
+
 export async function getTargetOverviewForRep(distributorId, year, month) {
   const { data } = await api.get(`/admin/distributors/${distributorId}/target-overview`, {
     params: { year, month },
