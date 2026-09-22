@@ -50,6 +50,11 @@ export async function assignDistributor(orderId, distributorId) {
   return data.data;
 }
 
+export async function changeDistributorType(distributorId, distributorType) {
+  const { data } = await api.patch(`/admin/distributors/${distributorId}/type`, { distributorType });
+  return data.data;
+}
+
 export async function listDistributors(status, distributorType) {
   const params = {};
   if (status) params.status = status;

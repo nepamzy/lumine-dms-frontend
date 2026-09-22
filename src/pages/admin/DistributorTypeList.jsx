@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listDistributors, approveDistributor, rejectDistributor, listTerritories, getDistributorHistory, removeDistributor } from "../../api/admin";
+import { listDistributors, approveDistributor, rejectDistributor, listTerritories, getDistributorHistory, removeDistributor, changeDistributorType } from "../../api/admin";
 import ActivityHistoryModal from "../../components/ActivityHistoryModal";
 
 // Shared list UI for both the admin "Distributors" tab and "Sales Reps"
@@ -41,6 +41,20 @@ export default function DistributorTypeList({ distributorType, label }) {
   const handleRemove = async (id, name) => {
     if (!window.confirm(`Remove ${name}? They can sign up fresh again, but this account's history moves to Trash.`)) return;
     await removeDistributor(id);
+    refresh();
+  };
+
+  // Reclassifies an account between Distributor and Sales Rep — mainly for
+  // accounts stuck on the pre-split default (they signed up before this
+  // distinction existed, or through a flow that never set it explicitly).
+  // Everything else about the account (approval, territory, referral
+  // history, every existing order/customer link) stays untouched; this
+  // just flips which dashboard and which tab they show up in.
+  const otherType = distributorType === "distributor" ? "sales_rep" : "distributor";
+  const otherLabel = otherType === "distributor" ? "Distributor" : "Sales Rep";
+  const handleChangeType = async (id, name) => {
+    if (!window.confirm(`Change ${name} to ${otherLabel}? They'll move to the ${otherLabel} tab and see that dashboard next time they log in.`)) return;
+    await changeDistributorType(id, otherType);
     refresh();
   };
 
@@ -103,6 +117,13 @@ export default function DistributorTypeList({ distributorType, label }) {
             </button>
           </>
         )}
+        <button
+          onClick={() => handleChangeType(d.id, d.business_name || d.full_name)}
+          className="text-navy-800 font-semibold text-xs whitespace-nowrap"
+          title={`Move to ${otherLabel}`}
+        >
+          → {otherLabel}
+        </button>
         <button
           onClick={() => handleRemove(d.id, d.business_name || d.full_name)}
           className="text-status-danger font-semibold text-xs"
