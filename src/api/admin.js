@@ -158,3 +158,18 @@ export async function getTargetOverviewForRep(distributorId, year, month) {
   });
   return data.data;
 }
+
+export async function reassignSalesRep(salesRepDistributorId, newDistributorId) {
+  const { data } = await api.patch(`/admin/distributors/${salesRepDistributorId}/reassign`, { newDistributorId });
+  return data.data;
+}
+
+export async function listAllSalesReps() {
+  const { data } = await api.get(`/admin/distributors/sales-reps/all`);
+  return data.data;
+}
+
+export async function auditHierarchyLinks() {
+  const { data } = await api.get(`/admin/distributors/hierarchy/audit`);
+  return data.data;
+}

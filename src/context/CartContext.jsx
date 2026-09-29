@@ -46,7 +46,7 @@ function loadCart(userId) {
 export function CartProvider({ children }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
-  const [forCustomer, setForCustomerState] = useState(null); // { id, name } when a sales rep is ordering on someone's behalf
+  const [forCustomer, setForCustomerState] = useState(null); // { id, name, kind } — kind "customer" (rep/distributor ordering for someone assigned to them) or "distributor" (admin placing a distributor's own restock order)
 
   // Whenever the logged-in user changes (login/logout/switch account),
   // load that user's own cart instead of whatever was there before.
@@ -112,7 +112,9 @@ export function CartProvider({ children }) {
     localStorage.removeItem(`lumine_cart_for_${user?.id}`);
   }, [user?.id]);
 
-  const isDistributor = user?.role === "distributor" && user?.distributor_type === "distributor";
+  const isDistributor =
+    forCustomer?.kind === "distributor" ||
+    (!forCustomer && user?.role === "distributor" && user?.distributor_type === "distributor");
 
   const totalPacksInCart = useMemo(() => items.reduce((sum, i) => sum + packsFor(i), 0), [items]);
 

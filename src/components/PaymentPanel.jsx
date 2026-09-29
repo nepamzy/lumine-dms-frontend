@@ -44,12 +44,16 @@ export default function PaymentPanel({ order, canPay, onUpdated, showReceipts = 
   const remaining = Math.max(0, Number(order.total_amount) - order.payment.totalPaid);
 
   // Only the FIRST successful payment on an order needs to clear a minimum
-  // floor (60% for a customer, 85% for a distributor) — once that's in,
-  // later top-ups can be any amount, so this hint only shows before any
-  // payment has landed. Sales reps have their own full-payment-only rule,
-  // not a floor, so they're excluded here.
+  // floor (60% for a customer, a graduated 65-85% for a distributor — see
+  // order.service.js getDistributorFirstPaymentMinPercent) — once that's
+  // in, later top-ups can be any amount, so this hint only shows before
+  // any payment has landed. Sales reps have their own full-payment-only
+  // rule, not a floor, so they're excluded here. The backend computes the
+  // real distributor number (it depends on account age + order history)
+  // and sends it as order.firstPaymentMinPercent — fall back to the flat
+  // customer rate only if that's missing for some reason.
   const firstPaymentMinPercent =
-    order.buyerKind === "distributor" ? 85 : order.buyerKind === "customer" ? 60 : null;
+    order.firstPaymentMinPercent ?? (order.buyerKind === "customer" ? 60 : null);
   const firstPaymentMinAmount = firstPaymentMinPercent ? (firstPaymentMinPercent / 100) * Number(order.total_amount) : 0;
   const showFirstPaymentHint = firstPaymentMinPercent && order.payment.totalPaid === 0;
 

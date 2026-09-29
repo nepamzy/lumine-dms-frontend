@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { listDistributors, approveDistributor, rejectDistributor, listTerritories, getDistributorHistory, removeDistributor, changeDistributorType } from "../../api/admin";
 import ActivityHistoryModal from "../../components/ActivityHistoryModal";
 
@@ -14,6 +15,7 @@ export default function DistributorTypeList({ distributorType, label }) {
   const [historyFor, setHistoryFor] = useState(null);
   const [historyData, setHistoryData] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const refresh = () =>
     Promise.all([
@@ -117,6 +119,16 @@ export default function DistributorTypeList({ distributorType, label }) {
             </button>
           </>
         )}
+        {distributorType === "distributor" && d.approval_status === "approved" && (
+          <Link
+            to={`/catalog?forCustomer=${d.user_id}&forCustomerName=${encodeURIComponent(d.business_name || d.full_name)}&forKind=distributor`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-navy-800 font-semibold text-xs whitespace-nowrap underline"
+            title={`Place a restock order for ${d.business_name || d.full_name}`}
+          >
+            Book Order
+          </Link>
+        )}
         <button
           onClick={() => handleChangeType(d.id, d.business_name || d.full_name)}
           className="text-navy-800 font-semibold text-xs whitespace-nowrap"
@@ -134,19 +146,41 @@ export default function DistributorTypeList({ distributorType, label }) {
     </div>
   );
 
+  const matchesSearch = (d) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      d.full_name?.toLowerCase().includes(q) ||
+      d.business_name?.toLowerCase().includes(q) ||
+      d.email?.toLowerCase().includes(q) ||
+      d.phone?.toLowerCase().includes(q)
+    );
+  };
+  const filteredApproved = approved.filter(matchesSearch);
+  const filteredOthers = others.filter(matchesSearch);
+
   return (
     <div>
       <h2 className="font-display font-bold text-xl text-navy-900 mb-5">{label}</h2>
+
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={`Search ${label.toLowerCase()} by name, email, or phone…`}
+        className="w-full text-sm border border-navy-900/15 rounded-md px-3 py-2 mb-4"
+      />
 
       {loading ? (
         <p className="text-navy-900/70">Loading…</p>
       ) : (
         <>
-          {approved.length === 0 ? (
-            <p className="text-navy-900/70 mb-4">No approved {label.toLowerCase()} yet.</p>
+          {filteredApproved.length === 0 ? (
+            <p className="text-navy-900/70 mb-4">
+              {search ? `No ${label.toLowerCase()} match "${search}".` : `No approved ${label.toLowerCase()} yet.`}
+            </p>
           ) : (
             <div className="flex flex-col gap-3 mb-4">
-              {approved.map((d) => <Row key={d.id} d={d} showActions={false} />)}
+              {filteredApproved.map((d) => <Row key={d.id} d={d} showActions={false} />)}
             </div>
           )}
 
@@ -155,15 +189,15 @@ export default function DistributorTypeList({ distributorType, label }) {
             className="text-sm font-semibold text-navy-800 flex items-center gap-1.5 mb-3"
           >
             <span className={`transition-transform inline-block ${showOthers ? "rotate-180" : ""}`}>▼</span>
-            {showOthers ? "Hide" : "Show"} pending / rejected / suspended ({others.length})
+            {showOthers ? "Hide" : "Show"} pending / rejected / suspended ({filteredOthers.length})
           </button>
 
           {showOthers && (
             <div className="flex flex-col gap-3">
-              {others.length === 0 ? (
+              {filteredOthers.length === 0 ? (
                 <p className="text-navy-900/70 text-sm">Nothing else here.</p>
               ) : (
-                others.map((d) => <Row key={d.id} d={d} showActions={true} />)
+                filteredOthers.map((d) => <Row key={d.id} d={d} showActions={true} />)
               )}
             </div>
           )}

@@ -18,8 +18,9 @@ export default function Catalog() {
   useEffect(() => {
     const customerId = searchParams.get("forCustomer");
     const customerName = searchParams.get("forCustomerName");
+    const kind = searchParams.get("forKind") || "customer";
     if (customerId && customerName) {
-      setForCustomer({ id: customerId, name: customerName });
+      setForCustomer({ id: customerId, name: customerName, kind });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -55,7 +56,7 @@ export default function Catalog() {
 
       {forCustomer && (
         <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-6 text-sm font-semibold flex items-center justify-between">
-          <span>Ordering on behalf of {forCustomer.name}</span>
+          <span>{forCustomer.kind === "distributor" ? `Placing a restock order for ${forCustomer.name}` : `Ordering on behalf of ${forCustomer.name}`}</span>
           <Link to="/cart" className="underline">View cart</Link>
         </div>
       )}

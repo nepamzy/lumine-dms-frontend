@@ -1,7 +1,15 @@
 import api from "./client";
 
-export async function createOrder(items, customerId) {
-  const { data } = await api.post("/orders", { items, ...(customerId ? { customerId } : {}) });
+export async function createOrder(items, buyerId, buyerKind) {
+  // buyerKind "distributor" is admin placing a restock order on behalf of a
+  // true distributor — sent as buyerId, which the backend accepts only
+  // from an admin caller. Anything else (a sales rep or true distributor
+  // ordering for one of their own customers) keeps using customerId,
+  // unchanged from before.
+  const body = { items };
+  if (buyerId && buyerKind === "distributor") body.buyerId = buyerId;
+  else if (buyerId) body.customerId = buyerId;
+  const { data } = await api.post("/orders", body);
   return data.data;
 }
 

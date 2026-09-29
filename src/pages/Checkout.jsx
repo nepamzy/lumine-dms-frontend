@@ -42,7 +42,8 @@ export default function Checkout() {
     try {
       const order = await createOrder(
         items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
-        forCustomer?.id
+        forCustomer?.id,
+        forCustomer?.kind
       );
       clearCart();
       navigate(`/orders/${order.id}`);
@@ -103,7 +104,9 @@ export default function Checkout() {
       </p>
       {forCustomer && (
         <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-6 text-sm font-semibold">
-          Placing this order on behalf of {forCustomer.name}. They'll handle payment from their own order page.
+          {forCustomer.kind === "distributor"
+            ? `Placing a restock order for ${forCustomer.name}. They'll handle payment from their own order page — or you can log it manually as admin.`
+            : `Placing this order on behalf of ${forCustomer.name}. They'll handle payment from their own order page.`}
         </div>
       )}
       {isSalesRepSelfOrder && (

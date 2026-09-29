@@ -13,7 +13,7 @@ export default function Cart() {
   const [worstOrder, setWorstOrder] = useState(null);
 
   useEffect(() => {
-    if (!user || (user.role === "distributor" && user.distributor_type === "sales_rep")) return;
+    if (!user || user.role === "admin" || (user.role === "distributor" && user.distributor_type === "sales_rep")) return;
     listMyOrders()
       .then((orders) => {
         const unpaid = orders
@@ -45,7 +45,7 @@ export default function Cart() {
 
       {forCustomer && (
         <div className="bg-gold-500/15 text-gold-700 rounded-md px-4 py-3 mb-6 text-sm font-semibold">
-          Ordering on behalf of {forCustomer.name}
+          {forCustomer.kind === "distributor" ? `Placing a restock order for ${forCustomer.name}` : `Ordering on behalf of ${forCustomer.name}`}
         </div>
       )}
 
