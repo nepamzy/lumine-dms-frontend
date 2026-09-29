@@ -2,12 +2,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useInstallPrompt } from "../utils/installPrompt";
+import { usePushNotifications } from "../utils/pushNotifications";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
   const { canInstall, isIOS, promptInstall } = useInstallPrompt();
+  const push = usePushNotifications();
 
   const handleInstallClick = async () => {
     if (isIOS) {
@@ -40,6 +42,20 @@ export default function Navbar() {
               className="text-xs font-bold border border-gold-500 text-gold-500 px-3 py-2 rounded-md hover:bg-gold-500 hover:text-navy-900 transition-colors whitespace-nowrap"
             >
               Install
+            </button>
+          )}
+          {user && push.supported && push.permission !== "denied" && (
+            <button
+              onClick={push.subscribed ? push.disable : push.enable}
+              disabled={push.busy}
+              title={push.subscribed ? "Notifications are on — tap to turn off" : "Get notified about your orders"}
+              className={`text-xs font-bold px-3 py-2 rounded-md transition-colors whitespace-nowrap disabled:opacity-50 ${
+                push.subscribed
+                  ? "border border-cream-50/30 text-cream-50/80 hover:bg-cream-50/10"
+                  : "border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-navy-900"
+              }`}
+            >
+              {push.busy ? "…" : push.subscribed ? "🔔 On" : "🔔 Enable"}
             </button>
           )}
           {(user?.role === "customer" || user?.role === "distributor") && (

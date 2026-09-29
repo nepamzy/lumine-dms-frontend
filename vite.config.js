@@ -6,6 +6,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // injectManifest (a custom src/sw.js, see there) instead of the
+      // default generateSW — needed so the service worker can also handle
+      // push/notificationclick events, not just precaching/offline.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.js",
+      injectRegister: "auto",
       registerType: "autoUpdate",
       includeAssets: ["favicon-32x32.png", "favicon-16x16.png", "apple-touch-icon.png"],
       manifest: {
