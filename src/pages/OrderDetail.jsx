@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getOrder, confirmTransport, confirmReceived, verifyPayment, cancelOrder, editOrderItems } from "../api/orders";
+import { getOrder, confirmTransport, confirmReceived, verifyPayment, cancelOrder, editOrderItems, recordOrderShortfall } from "../api/orders";
 import { deleteOrder } from "../api/admin";
 import { quarterPackUnits, packLabelFor } from "../utils/packSizes";
 import OrderStatusStepper from "../components/OrderStatusStepper";
@@ -20,8 +20,13 @@ export default function OrderDetail() {
   const [editing, setEditing] = useState(false);
   const [draftItems, setDraftItems] = useState([]); // [{ variantId, size, productName, quantity }]
   const [editError, setEditError] = useState(null);
+  const [shortfalling, setShortfalling] = useState(false);
+  const [shortfallDraft, setShortfallDraft] = useState([]); // [{ variantId, size, productName, quantity }] — "quantity" here means units SHORT
+  const [shortfallNote, setShortfallNote] = useState("");
+  const [shortfallError, setShortfallError] = useState(null);
+  const [shortfallResult, setShortfallResult] = useState(null); // { overpaidBy } after a successful save, shown once
 
-  const refresh = () => getOrder(id).then(setOrder);
+  const refresh = () => getOrder(id).then((fresh) => { setOrder(fresh); return fresh; });
 
   useEffect(() => {
     setLoading(true);
@@ -108,6 +113,9 @@ export default function OrderDetail() {
   // before the order has entered production (48hrs after it was placed).
   const canModify =
     ["pending", "paid"].includes(order.status) && !order.stage.production && (isBuyer || isPlacer || isAdmin);
+  const editWindowHoursLeft = canModify
+    ? Math.max(1, Math.ceil(48 - (Date.now() - new Date(order.created_at).getTime()) / 3_600_000))
+    : 0;
 
   const startEdit = () => {
     const grouped = {};
@@ -154,6 +162,68 @@ export default function OrderDetail() {
       setEditing(false);
     } catch (err) {
       setEditError(err.response?.data?.message || "Couldn't save changes.");
+      // The 48h production cutoff is enforced server-side at save time, not
+      // just when the edit button first appeared — if it lapsed while this
+      // person was mid-edit, drop out of edit mode as soon as the refreshed
+      // order confirms that, so the "entered production" message takes over
+      // instead of leaving a now-locked form sitting there inviting a retry
+      // that'll just fail again.
+      const fresh = await refresh();
+      if (fresh.stage.production) setEditing(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startShortfall = () => {
+    const grouped = {};
+    for (const item of order.items) {
+      const key = item.variant_id;
+      if (!grouped[key]) {
+        grouped[key] = {
+          variantId: item.variant_id,
+          size: item.variant_size,
+          productName: item.product_name,
+          onOrder: 0, // how many are currently on the order — the ceiling for "short"
+          quantity: 0, // how many of those are short
+        };
+      }
+      grouped[key].onOrder += item.quantity;
+    }
+    setShortfallDraft(Object.values(grouped));
+    setShortfallNote("");
+    setShortfallError(null);
+    setShortfallResult(null);
+    setShortfalling(true);
+  };
+
+  const adjustShortfallQty = (variantId, delta) => {
+    setShortfallDraft((prev) =>
+      prev.map((it) => {
+        if (it.variantId !== variantId) return it;
+        const step = quarterPackUnits(it.size);
+        return { ...it, quantity: Math.min(it.onOrder, Math.max(0, it.quantity + delta * step)) };
+      })
+    );
+  };
+
+  const saveShortfall = async () => {
+    setShortfallError(null);
+    const items = shortfallDraft
+      .filter((it) => it.quantity > 0)
+      .map((it) => ({ variantId: it.variantId, quantity: it.quantity }));
+    if (items.length === 0) {
+      setShortfallError("Mark at least one item as short — or discard if production actually came through in full.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await recordOrderShortfall(order.id, items, shortfallNote || undefined);
+      await refresh();
+      setShortfalling(false);
+      setShortfallResult({ overpaidBy: result.overpaidBy });
+    } catch (err) {
+      setShortfallError(err.response?.data?.message || "Couldn't record the shortfall.");
     } finally {
       setBusy(false);
     }
@@ -311,21 +381,28 @@ export default function OrderDetail() {
       />
 
       {canModify && !editing && (
-        <div className="flex gap-2 mt-5">
-          <button
-            disabled={busy}
-            onClick={startEdit}
-            className="bg-navy-800 text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
-          >
-            Edit Order
-          </button>
-          <button
-            disabled={busy}
-            onClick={handleCancelOrder}
-            className="bg-status-danger text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
-          >
-            Cancel Order
-          </button>
+        <div className="mt-5">
+          <div className="flex gap-2">
+            <button
+              disabled={busy}
+              onClick={startEdit}
+              className="bg-navy-800 text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+            >
+              Edit Order
+            </button>
+            <button
+              disabled={busy}
+              onClick={handleCancelOrder}
+              className="bg-status-danger text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+            >
+              Cancel Order
+            </button>
+          </div>
+          <p className="text-[11px] text-navy-900/40 mt-2">
+            {editWindowHoursLeft <= 1
+              ? "Less than an hour left to edit or cancel — this order enters production soon."
+              : `${editWindowHoursLeft} hour${editWindowHoursLeft === 1 ? "" : "s"} left to edit or cancel before this order enters production.`}
+          </p>
         </div>
       )}
       {!canModify && !isAdmin && ["pending", "paid"].includes(order.status) && order.stage.production && (
@@ -398,6 +475,105 @@ export default function OrderDetail() {
           </div>
         )}
       </div>
+
+      {order.shortfalls?.length > 0 && (
+        <div className="bg-white rounded-card shadow-card p-5 mt-5">
+          <h3 className="font-display font-bold text-navy-900 mb-1">Production Shortfall</h3>
+          <p className="text-xs text-navy-900/45 mb-3">
+            Some of what was ordered couldn't be produced — the total above has already been adjusted down to match.
+          </p>
+          <div className="flex flex-col gap-2">
+            {order.shortfalls.map((s) => (
+              <div key={s.id} className="flex justify-between text-sm">
+                <span className="text-navy-900/70">
+                  {s.product_name} — {s.variant_size} × {packLabelFor(s.quantity, s.variant_size)}
+                  {s.note && <span className="text-navy-900/40"> · {s.note}</span>}
+                </span>
+                <span className="font-semibold text-status-danger">−₦{Number(s.amount).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isAdmin && ["pending", "paid"].includes(order.status) && (
+        <div className="bg-white rounded-card shadow-card p-5 mt-5">
+          <h3 className="font-display font-bold text-navy-900 mb-1">Record Production Shortfall</h3>
+          <p className="text-xs text-navy-900/45 mb-3">
+            If production couldn't fully meet this order, mark what's short here — the total (and what's left to pay) updates automatically. Works at any stage, including after the edit window above has closed.
+          </p>
+
+          {shortfallResult && (
+            <div className="bg-gold-500/15 text-gold-700 rounded-md px-3 py-2 mb-3 text-xs font-semibold">
+              Shortfall recorded — total adjusted.
+              {shortfallResult.overpaidBy > 0 &&
+                ` The customer has now paid ₦${shortfallResult.overpaidBy.toLocaleString()} more than the new total — arrange a refund or credit manually.`}
+            </div>
+          )}
+
+          {!shortfalling ? (
+            <button
+              disabled={busy}
+              onClick={startShortfall}
+              className="bg-status-danger/90 text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+            >
+              Record Shortfall
+            </button>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {shortfallDraft.map((it) => (
+                <div key={it.variantId} className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-navy-900/70">
+                    {it.productName} — {it.size} <span className="text-navy-900/40">({packLabelFor(it.onOrder, it.size)} on order)</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => adjustShortfallQty(it.variantId, -1)}
+                      className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
+                    >
+                      −
+                    </button>
+                    <span className="text-sm font-semibold text-navy-900 w-32 text-center">
+                      {it.quantity > 0 ? `${packLabelFor(it.quantity, it.size)} short` : "None short"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => adjustShortfallQty(it.variantId, 1)}
+                      className="w-7 h-7 rounded-md border border-navy-900/15 text-navy-900 font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <input
+                value={shortfallNote}
+                onChange={(e) => setShortfallNote(e.target.value)}
+                placeholder="Optional note (e.g. reason for the shortfall)"
+                className="text-sm border border-navy-900/15 rounded-md px-3 py-2"
+              />
+              {shortfallError && <p className="text-status-danger text-xs">{shortfallError}</p>}
+              <div className="flex gap-2 mt-1">
+                <button
+                  disabled={busy}
+                  onClick={saveShortfall}
+                  className="bg-status-danger/90 text-cream-50 text-xs font-bold px-4 py-2.5 rounded-md disabled:opacity-50"
+                >
+                  Save Shortfall
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => setShortfalling(false)}
+                  className="text-xs text-navy-900/70 underline"
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

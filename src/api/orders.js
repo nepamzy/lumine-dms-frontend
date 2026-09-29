@@ -36,6 +36,17 @@ export async function editOrderItems(id, items) {
   return data.data;
 }
 
+// Admin-only. Records units that couldn't actually be produced — reduces
+// the order's items/total to match, at any order stage (not gated by the
+// 48h edit cutoff above, since a shortfall is discovered during/after
+// production, well past that window). Returns { order, overpaidBy } —
+// overpaidBy is > 0 if the customer had already paid more than the new,
+// lower total.
+export async function recordOrderShortfall(id, items, note) {
+  const { data } = await api.post(`/orders/${id}/shortfall`, { items, note });
+  return data.data;
+}
+
 export async function logPayment(orderId, amount, note, percentOfTotal) {
   const { data } = await api.post(`/orders/${orderId}/payments`, { amount, note, percentOfTotal });
   return data.data;
