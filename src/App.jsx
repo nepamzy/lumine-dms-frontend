@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SiteVisitRemindersPopup from "./components/SiteVisitRemindersPopup";
 import LocationConsentGate from "./components/LocationConsentGate";
@@ -42,6 +43,7 @@ function RouteFallback() {
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
+      <ScrollToTop />
       <Navbar />
       <SiteVisitRemindersPopup />
       <LocationConsentGate />
