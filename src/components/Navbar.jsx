@@ -44,6 +44,19 @@ export default function Navbar() {
               Install
             </button>
           )}
+          {user && push.supported && push.permission === "denied" && (
+            // Permission was revoked at the browser/OS level (e.g. a
+            // notification long-press "stop" on Android) — previously this
+            // button just vanished with no explanation, so someone who'd
+            // enabled it before had no way to know it had silently stopped
+            // working. Surface it instead of hiding it.
+            <span
+              title="Notifications are blocked by your browser. Re-enable them in your browser's site settings for Lumine."
+              className="text-xs font-bold px-3 py-2 rounded-md border border-red-400/40 text-red-300 whitespace-nowrap cursor-help"
+            >
+              🔕 Blocked
+            </span>
+          )}
           {user && push.supported && push.permission !== "denied" && (
             <button
               onClick={push.subscribed ? push.disable : push.enable}
