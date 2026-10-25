@@ -35,13 +35,23 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // The refresh call itself is deliberately excluded here — retrying a
-    // failed refresh by calling refresh again is circular and used to
-    // deadlock: the retry awaits `refreshPromise`, but the failing refresh
+    // Endpoints reachable with no session at all — login (wrong password)
+    // and reset-password (expired/used reset link) both throw their own
+    // plain 401 for reasons that have nothing to do with an expired access
+    // token. Without this exclusion, that 401 triggered a silent refresh
+    // attempt, which itself 401's (there's no session to refresh), and
+    // THAT error replaced the real one — so a wrong password showed
+    // "Invalid or expired refresh token" instead of "Incorrect email/phone
+    // or password", with no way to tell what actually went wrong.
+    // /auth/refresh is excluded for a different, structural reason: retrying
+    // a failed refresh by calling refresh again is circular and used to
+    // deadlock — the retry awaits `refreshPromise`, but the failing refresh
     // call IS `refreshPromise`, so it was awaiting its own settlement and
-    // never resolved. A 401 from /auth/refresh just means "not logged in,"
-    // which should fall straight through to the plain rejection below.
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/refresh")) {
+    // never resolved.
+    const isPreAuthEndpoint = ["/auth/refresh", "/auth/login", "/auth/reset-password"].some((path) =>
+      originalRequest.url?.includes(path)
+    );
+    if (error.response?.status === 401 && !originalRequest._retry && !isPreAuthEndpoint) {
       originalRequest._retry = true;
       try {
         // Multiple simultaneous 401s should only trigger one refresh call
