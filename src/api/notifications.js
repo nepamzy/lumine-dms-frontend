@@ -22,3 +22,9 @@ export async function replayAdminPushHistory() {
   const { data } = await api.post("/notifications/push/replay-admin-history");
   return data.data; // { count }
 }
+
+// Same one-time catch-up, emailed to the site's published support inbox.
+export async function emailHistoryToSupport() {
+  const { data } = await api.post("/notifications/email/replay-support-history");
+  return data.data; // { count }
+}
