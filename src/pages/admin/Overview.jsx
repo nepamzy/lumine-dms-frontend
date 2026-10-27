@@ -3,10 +3,15 @@ import { salesReport, inventoryReport, repRevenueBreakdown } from "../../api/adm
 import { replayAdminPushHistory } from "../../api/notifications";
 import RepRevenueDrilldown from "../../components/RepRevenueDrilldown";
 
-// One-time catch-up button — re-pushes every order/signup alert on record
-// to whichever admin device clicks it, nobody else. Not something anyone
-// needs more than rarely (e.g. after fixing a push delivery issue), so it
-// lives as a small dismissable strip rather than permanent dashboard UI.
+// One-time catch-up button — re-pushes a notification for every signup,
+// order, and payment Lumine has ever recorded, to whichever admin device
+// clicks it, nobody else. Sending is paced server-side (~350ms apart, so a
+// large batch doesn't arrive as one burst and get collapsed/dropped by the
+// OS or push service) and continues after this call returns, so `count`
+// is how many are queued, not yet delivered — this can take a couple of
+// minutes to finish trickling in for a few hundred events. Not something
+// anyone needs more than rarely, so it lives as a small dismissable strip
+// rather than permanent dashboard UI.
 function PushReplayBanner() {
   const [state, setState] = useState("idle"); // idle | sending | done | dismissed | error
   const [count, setCount] = useState(0);
@@ -28,13 +33,14 @@ function PushReplayBanner() {
     <div className="bg-white rounded-card shadow-card p-4 mb-4 flex items-center justify-between gap-4 flex-wrap">
       {state === "done" ? (
         <p className="text-sm text-navy-900/70">
-          Sent {count} order/signup push notification{count === 1 ? "" : "s"} to this device.
+          Queued {count} notification{count === 1 ? "" : "s"} (every signup, order &amp; payment) to this device —
+          they'll trickle in over the next couple of minutes, spaced out on purpose.
         </p>
       ) : state === "error" ? (
         <p className="text-sm text-status-danger">Couldn't send those — try again in a moment.</p>
       ) : (
         <p className="text-sm text-navy-900/70">
-          Resend every order &amp; new-signup push notification to this device only, one time.
+          Resend every signup, order &amp; payment notification to this device only, one time.
         </p>
       )}
       <div className="flex gap-2">
