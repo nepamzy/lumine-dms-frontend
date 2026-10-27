@@ -1,6 +1,62 @@
 import { useEffect, useMemo, useState } from "react";
 import { salesReport, inventoryReport, repRevenueBreakdown } from "../../api/admin";
+import { replayAdminPushHistory } from "../../api/notifications";
 import RepRevenueDrilldown from "../../components/RepRevenueDrilldown";
+
+// One-time catch-up button — re-pushes every order/signup alert on record
+// to whichever admin device clicks it, nobody else. Not something anyone
+// needs more than rarely (e.g. after fixing a push delivery issue), so it
+// lives as a small dismissable strip rather than permanent dashboard UI.
+function PushReplayBanner() {
+  const [state, setState] = useState("idle"); // idle | sending | done | dismissed | error
+  const [count, setCount] = useState(0);
+
+  if (state === "dismissed") return null;
+
+  const handleClick = async () => {
+    setState("sending");
+    try {
+      const { count } = await replayAdminPushHistory();
+      setCount(count);
+      setState("done");
+    } catch {
+      setState("error");
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-card shadow-card p-4 mb-4 flex items-center justify-between gap-4 flex-wrap">
+      {state === "done" ? (
+        <p className="text-sm text-navy-900/70">
+          Sent {count} order/signup push notification{count === 1 ? "" : "s"} to this device.
+        </p>
+      ) : state === "error" ? (
+        <p className="text-sm text-status-danger">Couldn't send those — try again in a moment.</p>
+      ) : (
+        <p className="text-sm text-navy-900/70">
+          Resend every order &amp; new-signup push notification to this device only, one time.
+        </p>
+      )}
+      <div className="flex gap-2">
+        {state !== "done" && (
+          <button
+            onClick={handleClick}
+            disabled={state === "sending"}
+            className="text-xs font-bold border border-gold-500 text-gold-500 px-3 py-2 rounded-md hover:bg-gold-500 hover:text-navy-900 transition-colors disabled:opacity-50"
+          >
+            {state === "sending" ? "Sending…" : "Resend to this device"}
+          </button>
+        )}
+        <button
+          onClick={() => setState("dismissed")}
+          className="text-xs font-bold text-navy-900/50 px-3 py-2 rounded-md hover:bg-navy-900/5 transition-colors"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ label, value, accent }) {
   return (
@@ -84,6 +140,8 @@ export default function Overview() {
 
   return (
     <div>
+      <PushReplayBanner />
+
       {/* Top-line totals — the two numbers that matter most */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <StatCard label="Total Orders" value={sales.summary.order_count} />

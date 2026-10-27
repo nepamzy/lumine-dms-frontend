@@ -15,3 +15,10 @@ export async function subscribeToPush({ endpoint, keys, userAgent }) {
 export async function unsubscribeFromPush(endpoint) {
   await api.post("/notifications/push/unsubscribe", { endpoint });
 }
+
+// One-time catch-up: re-pushes every order/signup alert on record to
+// whichever admin device calls this, never to every admin automatically.
+export async function replayAdminPushHistory() {
+  const { data } = await api.post("/notifications/push/replay-admin-history");
+  return data.data; // { count }
+}
