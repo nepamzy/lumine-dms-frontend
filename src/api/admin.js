@@ -162,9 +162,16 @@ export async function getDistributorHierarchyCustomers(distributorId) {
   return data.data;
 }
 
-export async function getTargetOverviewForRep(distributorId, year, month) {
+// A sales rep's own approval-anchored cycles (e.g. "approved the 15th" ->
+// cycles run 15th-to-14th) — replaces the old shared year/month picker.
+export async function listRepCycles(distributorId) {
+  const { data } = await api.get(`/admin/distributors/${distributorId}/target-overview/cycles`);
+  return data.data;
+}
+
+export async function getTargetOverviewForRep(distributorId, cycleIndex) {
   const { data } = await api.get(`/admin/distributors/${distributorId}/target-overview`, {
-    params: { year, month },
+    params: { cycle: cycleIndex },
   });
   return data.data;
 }
