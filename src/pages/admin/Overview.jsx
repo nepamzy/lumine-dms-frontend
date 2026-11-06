@@ -1,93 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { salesReport, inventoryReport, repRevenueBreakdown, userTotals, monthlyRevenue } from "../../api/admin";
-import { replayAdminPushHistory, emailHistoryToSupport } from "../../api/notifications";
 import RepRevenueDrilldown from "../../components/RepRevenueDrilldown";
-
-// One action within the replay banner below — push to this device, or
-// email to the support inbox. Each tracks its own state independently so
-// clicking one doesn't disturb the other.
-function ReplayAction({ label, sendingLabel, doneText, onRun }) {
-  const [state, setState] = useState("idle"); // idle | sending | done | error
-  const [count, setCount] = useState(0);
-
-  const handleClick = async () => {
-    setState("sending");
-    try {
-      const { count } = await onRun();
-      setCount(count);
-      setState("done");
-    } catch {
-      setState("error");
-    }
-  };
-
-  if (state === "done") {
-    return <p className="text-sm text-navy-900/70">{doneText(count)}</p>;
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={handleClick}
-        disabled={state === "sending"}
-        className="text-xs font-bold border border-gold-500 text-gold-500 px-3 py-2 rounded-md hover:bg-gold-500 hover:text-navy-900 transition-colors disabled:opacity-50"
-      >
-        {state === "sending" ? sendingLabel : label}
-      </button>
-      {state === "error" && <span className="text-xs text-status-danger">Couldn't send — try again.</span>}
-    </div>
-  );
-}
-
-// One-time catch-up strip — replays a notification for every signup,
-// order, and payment Lumine has ever recorded, either pushed to whichever
-// admin device clicks it or emailed to the support inbox (never broadcast
-// to every admin). Sending is paced server-side (push ~350ms apart, email
-// ~1s apart, so a large batch doesn't arrive as one burst and get
-// collapsed/dropped by the OS, push service, or email provider's rate
-// limit) and continues after each call returns, so the count shown is how
-// many are queued, not yet how many have actually landed — this can take
-// a few minutes to finish trickling in for a few hundred events. Not
-// something anyone needs more than rarely, so it's a small dismissable
-// strip rather than permanent dashboard UI.
-function PushReplayBanner() {
-  const [dismissed, setDismissed] = useState(false);
-  if (dismissed) return null;
-
-  return (
-    <div className="bg-white rounded-card shadow-card p-4 mb-4 flex items-center justify-between gap-4 flex-wrap">
-      <div className="flex flex-col gap-2">
-        <p className="text-sm text-navy-900/70">
-          Resend every signup, order &amp; payment notification, one time — to this device, or to the support inbox.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <ReplayAction
-            label="Resend to this device"
-            sendingLabel="Sending…"
-            onRun={replayAdminPushHistory}
-            doneText={(count) =>
-              `Queued ${count} push notification${count === 1 ? "" : "s"} to this device — trickling in over the next couple of minutes.`
-            }
-          />
-          <ReplayAction
-            label="Email to support inbox"
-            sendingLabel="Sending…"
-            onRun={emailHistoryToSupport}
-            doneText={(count) =>
-              `Queued ${count} email${count === 1 ? "" : "s"} to the support inbox — trickling in over the next few minutes.`
-            }
-          />
-        </div>
-      </div>
-      <button
-        onClick={() => setDismissed(true)}
-        className="text-xs font-bold text-navy-900/50 px-3 py-2 rounded-md hover:bg-navy-900/5 transition-colors self-start"
-      >
-        Dismiss
-      </button>
-    </div>
-  );
-}
 
 // Rounded-top-only bar path, anchored flat to the baseline — a plain
 // four-corner rounded rect looks wrong sitting on an axis line.
@@ -317,8 +230,6 @@ export default function Overview() {
 
   return (
     <div>
-      <PushReplayBanner />
-
       {/* Top-line totals — the two numbers that matter most */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <StatCard label="Total Orders" value={sales.summary.order_count} />
