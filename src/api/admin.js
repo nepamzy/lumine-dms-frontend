@@ -92,6 +92,16 @@ export async function repRevenueBreakdown(params) {
   const { data } = await api.get("/reports/rep-revenue", { params });
   return data.data;
 }
+
+export async function userTotals() {
+  const { data } = await api.get("/reports/user-totals");
+  return data.data;
+}
+
+export async function monthlyRevenue() {
+  const { data } = await api.get("/reports/monthly-revenue");
+  return data.data;
+}
 export async function listCustomers(distributorId) {
   const { data } = await api.get("/admin/customers", distributorId ? { params: { distributorId } } : {});
   return data.data;

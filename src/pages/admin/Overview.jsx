@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { salesReport, inventoryReport, repRevenueBreakdown } from "../../api/admin";
+import { salesReport, inventoryReport, repRevenueBreakdown, userTotals, monthlyRevenue } from "../../api/admin";
 import { replayAdminPushHistory, emailHistoryToSupport } from "../../api/notifications";
 import RepRevenueDrilldown from "../../components/RepRevenueDrilldown";
 
@@ -89,6 +89,141 @@ function PushReplayBanner() {
   );
 }
 
+// Rounded-top-only bar path, anchored flat to the baseline — a plain
+// four-corner rounded rect looks wrong sitting on an axis line.
+function roundedTopBarPath(x, y, w, h, r) {
+  if (h <= 0) return "";
+  const radius = Math.min(r, h, w / 2);
+  return `M${x},${y + h} L${x},${y + radius} Q${x},${y} ${x + radius},${y} L${x + w - radius},${y} Q${x + w},${y} ${x + w},${y + radius} L${x + w},${y + h} Z`;
+}
+
+// Rounds a scale ceiling up to a clean step (1/2/2.5/5/10 x a power of ten)
+// so gridlines read as whole, sensible numbers instead of an arbitrary max.
+function niceAxisMax(rawMax) {
+  if (rawMax <= 0) return 1;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawMax)));
+  for (const step of [1, 2, 2.5, 5, 10]) {
+    if (rawMax <= step * magnitude) return step * magnitude;
+  }
+  return 10 * magnitude;
+}
+
+function formatMonth(yyyyMm) {
+  const [y, m] = yyyyMm.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+
+// Actual money collected, by month — a single series, so no legend (the
+// heading names it); every bar gets a direct value label since a monthly
+// series rarely has more than a dozen points to label.
+function MonthlyRevenueChart({ data }) {
+  const [hovered, setHovered] = useState(null);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-card shadow-card p-5">
+        <h3 className="font-display font-bold text-navy-900 mb-1">Monthly Revenue</h3>
+        <p className="text-sm text-navy-900/70">No payments recorded yet — this fills in as revenue comes in.</p>
+      </div>
+    );
+  }
+
+  const width = 640;
+  const height = 260;
+  const padding = { top: 30, right: 12, bottom: 34, left: 12 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+
+  const maxRevenue = Math.max(...data.map((d) => d.revenue), 0);
+  const axisMax = niceAxisMax(maxRevenue || 1);
+  const gridFractions = [0, 0.25, 0.5, 0.75, 1];
+
+  const barGap = 14;
+  const barWidth = Math.min(64, (plotWidth - barGap * (data.length - 1)) / data.length);
+  const totalBarsWidth = barWidth * data.length + barGap * (data.length - 1);
+  const startX = padding.left + Math.max(0, (plotWidth - totalBarsWidth) / 2);
+
+  const formatNaira = (n) =>
+    n >= 1000 ? `₦${(n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k` : `₦${Math.round(n)}`;
+
+  const first = data[0].revenue;
+  const last = data[data.length - 1].revenue;
+  const trendWord = data.length < 2 ? "" : last > first ? "trending up" : last < first ? "trending down" : "flat";
+  const summary = `Monthly revenue from ${formatMonth(data[0].month)} to ${formatMonth(data[data.length - 1].month)}, ${trendWord}. Highest month: ${formatNaira(maxRevenue)}.`;
+
+  return (
+    <div className="bg-white rounded-card shadow-card p-5">
+      <h3 className="font-display font-bold text-navy-900 mb-1">Monthly Revenue</h3>
+      <p className="text-xs text-navy-900/60 mb-4">Actual payments collected, by month</p>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-auto"
+        role="img"
+        aria-label={summary}
+      >
+        {gridFractions.map((f) => {
+          const value = axisMax * f;
+          const y = padding.top + plotHeight - f * plotHeight;
+          return (
+            <g key={f}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="#0A2D6F"
+                strokeOpacity={0.08}
+                strokeWidth={1}
+              />
+              <text x={padding.left} y={y - 4} fontSize={9} fill="#0A2D6F" fillOpacity={0.45}>
+                {formatNaira(value)}
+              </text>
+            </g>
+          );
+        })}
+
+        {data.map((d, i) => {
+          const barHeight = (d.revenue / axisMax) * plotHeight;
+          const x = startX + i * (barWidth + barGap);
+          const y = padding.top + plotHeight - barHeight;
+          const isHovered = hovered === i;
+          return (
+            <g
+              key={d.month}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              style={{ cursor: "pointer" }}
+            >
+              {/* Wider invisible hit area — easier to hover than the bar alone */}
+              <rect
+                x={x - barGap / 2}
+                y={padding.top}
+                width={barWidth + barGap}
+                height={plotHeight}
+                fill="transparent"
+              />
+              <path d={roundedTopBarPath(x, y, barWidth, Math.max(barHeight, 2), 4)} fill={isHovered ? "#0A2D6F" : "#0F4DB8"} />
+              <text x={x + barWidth / 2} y={y - 8} textAnchor="middle" fontSize={10} fontWeight={700} fill="#0A2D6F">
+                {formatNaira(d.revenue)}
+              </text>
+              <text
+                x={x + barWidth / 2}
+                y={height - padding.bottom + 16}
+                textAnchor="middle"
+                fontSize={10}
+                fill="#0A2D6F"
+                fillOpacity={0.7}
+              >
+                {formatMonth(d.month)}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 function StatCard({ label, value, accent }) {
   return (
     <div className="bg-white rounded-card shadow-card p-5">
@@ -131,15 +266,19 @@ export default function Overview() {
   const [sales, setSales] = useState(null);
   const [inventory, setInventory] = useState(null);
   const [repRows, setRepRows] = useState(null);
+  const [userCounts, setUserCounts] = useState(null);
+  const [revenueByMonth, setRevenueByMonth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    Promise.all([salesReport(), inventoryReport(), repRevenueBreakdown()])
-      .then(([s, i, r]) => {
+    Promise.all([salesReport(), inventoryReport(), repRevenueBreakdown(), userTotals(), monthlyRevenue()])
+      .then(([s, i, r, u, m]) => {
         setSales(s);
         setInventory(i);
         setRepRows(r);
+        setUserCounts(u);
+        setRevenueByMonth(m);
       })
       .catch((err) => {
         console.error("Overview failed to load:", err);
@@ -207,6 +346,18 @@ export default function Overview() {
           value={`₦${distributorTotals.revenue.toLocaleString()}`}
           accent="text-green-700"
         />
+      </div>
+
+      {/* Total Users — every account on the platform, by role */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total Users" value={userCounts.total} accent="text-navy-900" />
+        <StatCard label="Customers" value={userCounts.customers} />
+        <StatCard label="Distributors" value={userCounts.distributors} />
+        <StatCard label="Sales Reps" value={userCounts.salesReps} />
+      </div>
+
+      <div className="mb-8">
+        <MonthlyRevenueChart data={revenueByMonth} />
       </div>
 
       <div className="mb-8">
