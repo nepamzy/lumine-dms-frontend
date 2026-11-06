@@ -143,8 +143,15 @@ function MonthlyRevenueChart({ data }) {
   const totalBarsWidth = barWidth * data.length + barGap * (data.length - 1);
   const startX = padding.left + Math.max(0, (plotWidth - totalBarsWidth) / 2);
 
-  const formatNaira = (n) =>
-    n >= 1000 ? `₦${(n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k` : `₦${Math.round(n)}`;
+  // Nigerian convention: K = thousand, M = million. The million tier was
+  // missing before — a figure like ₦1,674,300 was showing as "₦1674.3k"
+  // instead of "₦1.7M", which is correct but easy to misread as a number
+  // over a thousand times too large at a glance.
+  const formatNaira = (n) => {
+    if (n >= 1_000_000) return `₦${(n / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 })}M`;
+    if (n >= 1000) return `₦${(n / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k`;
+    return `₦${Math.round(n)}`;
+  };
 
   const first = data[0].revenue;
   const last = data[data.length - 1].revenue;
