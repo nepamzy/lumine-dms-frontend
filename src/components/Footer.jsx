@@ -1,4 +1,34 @@
 import { Link } from "react-router-dom";
+import nobsMark from "../assets/nobs-agent-mark.svg";
+
+// "Built by NOBS Agent" credit badge — colors and copy are the studio's
+// own brand snippet, kept exactly as supplied. The mark is a small SVG
+// that Vite inlines as a data URI at build time (it's under the inline
+// size limit), so nothing is fetched from another site to render it.
+function NobsAgentBadge() {
+  return (
+    <a
+      href="https://www.nobs-agent.site"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 14px",
+        borderRadius: "999px",
+        background: "#0b0d12",
+        textDecoration: "none",
+        fontSize: "13px",
+        lineHeight: 1,
+      }}
+    >
+      <img src={nobsMark} alt="" width="16" height="16" style={{ display: "block" }} />
+      <span style={{ color: "#8b93a3" }}>Built by</span>
+      <span style={{ color: "#e4b343", fontWeight: 600 }}>NOBS Agent</span>
+    </a>
+  );
+}
 
 export default function Footer() {
   return (
@@ -109,8 +139,11 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-5 text-center text-xs text-cream-50/60">
-        © {new Date().getFullYear()} Lumine — a Bonchris Industry Nig. Ltd brand. All rights reserved.
+      <div className="border-t border-white/10 py-5 px-6 text-center text-xs text-cream-50/60">
+        <p>© {new Date().getFullYear()} Lumine — a Bonchris Industry Nig. Ltd brand. All rights reserved.</p>
+        <div className="mt-4">
+          <NobsAgentBadge />
+        </div>
       </div>
     </footer>
   );
